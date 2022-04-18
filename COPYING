@@ -1,12 +1,6 @@
 This software includes code from minizip, which is part of zlib;
 in particular, the following files:
-src/crypt.h
-src/ioapi.c
-src/ioapi.h
-src/unzip.c
-src/unzip.h
-src/zip.c
-src/zip.h
+src/contrib/*.[ch]
 
 The license for this code is:
 
