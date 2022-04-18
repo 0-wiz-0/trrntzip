@@ -1,3 +1,5 @@
+# TorrentZip
+
 This project tries to enhance the code of the [original
 trrntzip](https://sourceforge.net/projects/trrntzip/) implementation
 for modern systems.
@@ -11,3 +13,19 @@ e.g. with sharing zip archives using
 comes from).
 
 The original code was written by shindakun and gjefferyes.
+
+# Installation
+
+## Requirements
+
+* A C compiler (e.g. gcc or clang)
+* [zlib](http://zlib.net/) at least version 1.2.2
+* [autoconf](https://www.gnu.org/software/autoconf/)
+* [automake](https://www.gnu.org/software/automake/)
+
+## Building
+
+* autoreconf -fiv
+* ./configure
+* make
+* make install
