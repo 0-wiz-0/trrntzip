@@ -20,12 +20,12 @@ The original code was written by shindakun and gjefferyes.
 
 * A C compiler (e.g. gcc or clang)
 * [zlib](http://zlib.net/) at least version 1.2.2
-* [autoconf](https://www.gnu.org/software/autoconf/)
-* [automake](https://www.gnu.org/software/automake/)
+* [CMake](https://cmake.org/)
 
 ## Building
 
-* autoreconf -fiv
-* ./configure
+* mkdir build
+* cd build
+* cmake ..
 * make
 * make install
