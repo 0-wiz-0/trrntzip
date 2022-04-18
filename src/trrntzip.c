@@ -57,9 +57,11 @@
 #define STATUS_CONTAINS_DIRS -5 // Zip has DIR entries that need deleted
 #define STATUS_ALLOC_ERROR -4   // Couldn't allocate memory.
 #define STATUS_ERROR -3         // Corrupted zipfile or file is not a zipfile.
-#define STATUS_BAD_COMMENT -2   // No comment or comment is not in the proper format.
-#define STATUS_OUT_OF_DATE -1   // Has proper comment, but zipfile has been changed.
-#define STATUS_OK 0             // File is A-Okay.
+#define STATUS_BAD_COMMENT                                                     \
+  -2 // No comment or comment is not in the proper format.
+#define STATUS_OUT_OF_DATE                                                     \
+  -1                // Has proper comment, but zipfile has been changed.
+#define STATUS_OK 0 // File is A-Okay.
 
 WORKSPACE *AllocateWorkspace(void);
 void FreeWorkspace(WORKSPACE *ws);
@@ -335,11 +337,13 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
   unsigned long crc = 0;
 
   if (strcmp(pDir, ".") == 0) {
-    sprintf(szTmpZipFileName, "%s", TMP_FILENAME);
-    sprintf(szZipFileName, "%s", zip_path);
+    snprintf(szTmpZipFileName, sizeof(szTmpZipFileName), "%s", TMP_FILENAME);
+    snprintf(szZipFileName, sizeof(szZipFileName), "%s", zip_path);
   } else {
-    sprintf(szTmpZipFileName, "%s%c%s", pDir, DIRSEP, TMP_FILENAME);
-    sprintf(szZipFileName, "%s%c%s", pDir, DIRSEP, zip_path);
+    snprintf(szTmpZipFileName, sizeof(szTmpZipFileName), "%s%c%s", pDir, DIRSEP,
+             TMP_FILENAME);
+    snprintf(szZipFileName, sizeof(szZipFileName), "%s%c%s", pDir, DIRSEP,
+             zip_path);
   }
   mktemp(szTmpZipFileName);
 
@@ -607,7 +611,7 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
   }
 
   // Set the global file comment, so that we know to skip this file in future
-  sprintf(szTmpBuf, "%s%08lX", gszApp, crc);
+  snprintf(szTmpBuf, sizeof(szTmpBuf), "%s%08lX", gszApp, crc);
 
   rc = zipClose(ZipHandle, szTmpBuf);
 
@@ -720,7 +724,7 @@ int RecursiveMigrate(const char *pszRelPath, WORKSPACE *ws, MIGRATE *mig) {
     szRelPathBuf[pszFileName - pszRelPath] = 0;
     pszFileName++;
   } else {
-    sprintf(szRelPathBuf, ".");
+    snprintf(szRelPathBuf, sizeof(szRelPathBuf), ".");
     pszFileName = pszRelPath;
   }
 
@@ -834,12 +838,15 @@ int RecursiveMigrateDir(const char *pszRelPath, WORKSPACE *ws) {
         szTmpBuf[0] = 0;
         FileNameStartPos = 0;
       } else {
-        FileNameStartPos = sprintf(szTmpBuf, "%s%c", pszRelPath, DIRSEP);
+        FileNameStartPos =
+            snprintf(szTmpBuf, sizeof(szTmpBuf), "%s%c", pszRelPath, DIRSEP);
       }
 
       for (iCounter = 0; (iCounter < iElements && FileNameArray[iCounter][0]);
            iCounter++) {
-        sprintf(szTmpBuf + FileNameStartPos, "%s", FileNameArray[iCounter]);
+        snprintf(szTmpBuf + FileNameStartPos,
+                 sizeof(szTmpBuf) - FileNameStartPos, "%s",
+                 FileNameArray[iCounter]);
         rc = RecursiveMigrate(szTmpBuf, ws, &mig);
         if (rc == TZ_CRITICAL)
           break;
@@ -907,7 +914,7 @@ int RecursiveMigrateTop(const char *pszRelPath, WORKSPACE *ws) {
 
   n = strlen(pszRelPath);
   if (n > 0 && pszRelPath[n - 1] == DIRSEP) {
-    sprintf(szRelPathBuf, "%s", pszRelPath);
+    snprintf(szRelPathBuf, sizeof(szRelPathBuf), "%s", pszRelPath);
     szRelPathBuf[n - 1] = 0;
     pszRelPath = szRelPathBuf;
   }
@@ -1006,7 +1013,7 @@ int main(int argc, char **argv) {
   ptr = strrchr(argv[0], DIRSEP);
   if (ptr) {
     *ptr = '\0';
-    sprintf(szStartPath, "%s", argv[0]);
+    snprintf(szStartPath, sizeof(szStartPath), "%s", argv[0]);
     pszStartPath = szStartPath;
   } else {
     pszStartPath = get_cwd();
@@ -1042,7 +1049,8 @@ int main(int argc, char **argv) {
       }
 #endif
     } else {
-      sprintf(szErrorLogFileName, "%s%c%s", pszStartPath, DIRSEP, "error.log");
+      snprintf(szErrorLogFileName, sizeof(szErrorLogFileName), "%s%c%s",
+               pszStartPath, DIRSEP, "error.log");
       remove(szErrorLogFileName);
     }
   }

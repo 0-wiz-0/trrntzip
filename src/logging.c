@@ -47,9 +47,9 @@ void logprint(FILE *stdf, FILE *f, char *format, ...) {
     now = time(NULL);
     t = localtime(&now);
 
-    sprintf(szTimeBuffer, "[%04d/%02d/%02d - %02d:%02d:%02d] ",
-            t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min,
-            t->tm_sec);
+    snprintf(szTimeBuffer, sizeof(szTimeBuffer),
+             "[%04d/%02d/%02d - %02d:%02d:%02d] ", t->tm_year + 1900,
+             t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);
   } else {
     szTimeBuffer[0] = 0;
   }
@@ -58,7 +58,7 @@ void logprint(FILE *stdf, FILE *f, char *format, ...) {
   continueline = !strchr(format, '\n');
 
   va_start(arglist, format);
-  vsprintf(szMessageBuffer, format, arglist);
+  vsnprintf(szMessageBuffer, sizeof(szMessageBuffer), format, arglist);
   va_end(arglist);
 
   // Print to stdout or stderr
@@ -87,9 +87,9 @@ void logprint3(FILE *stdf, FILE *f1, FILE *f2, char *format, ...) {
     now = time(NULL);
     t = localtime(&now);
 
-    sprintf(szTimeBuffer, "[%04d/%02d/%02d - %02d:%02d:%02d] ",
-            t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min,
-            t->tm_sec);
+    snprintf(szTimeBuffer, sizeof(szTimeBuffer),
+             "[%04d/%02d/%02d - %02d:%02d:%02d] ", t->tm_year + 1900,
+             t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);
   } else {
     szTimeBuffer[0] = 0;
   }
@@ -98,7 +98,7 @@ void logprint3(FILE *stdf, FILE *f1, FILE *f2, char *format, ...) {
   continueline = !strchr(format, '\n');
 
   va_start(arglist, format);
-  vsprintf(szMessageBuffer, format, arglist);
+  vsnprintf(szMessageBuffer, sizeof(szMessageBuffer), format, arglist);
   va_end(arglist);
 
   // Print to stdout or stderr
@@ -135,7 +135,7 @@ int OpenProcessLog(const char *pszWritePath, const char *pszRelPath,
     iPathLen = strlen(pszRelPath);
 
     if (iPathLen > 1) {
-      sprintf(szRelPathBuf, "%s", pszRelPath);
+      snprintf(szRelPathBuf, sizeof(szRelPathBuf), "%s", pszRelPath);
       // Strip off the last slash
       if (szRelPathBuf[iPathLen - 1] == DIRSEP) {
         szRelPathBuf[iPathLen - 1] = 0;
@@ -153,7 +153,7 @@ int OpenProcessLog(const char *pszWritePath, const char *pszRelPath,
         pszDirname = szRelPathBuf;
       }
     } else {
-      sprintf(szRelPathBuf, "%s", "");
+      snprintf(szRelPathBuf, sizeof(szRelPathBuf), "%s", "");
       // FIXME!
       // Note that pszDirname is not assigned!
       // Therefore szLogname comes up as (null), which is a nice kind of
@@ -161,9 +161,10 @@ int OpenProcessLog(const char *pszWritePath, const char *pszRelPath,
     }
   }
 
-  sprintf(szLogname, "%s[%s]_[%04d-%02d-%02d - %02d-%02d-%02d]", pszWritePath,
-          pszDirname, t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour,
-          t->tm_min, t->tm_sec);
+  snprintf(szLogname, sizeof(szLogname),
+           "%s[%s]_[%04d-%02d-%02d - %02d-%02d-%02d]", pszWritePath, pszDirname,
+           t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min,
+           t->tm_sec);
 
   mig->fProcessLog = OpenLog(szLogname);
 
