@@ -778,7 +778,7 @@ int RecursiveMigrate(const char *pszRelPath, WORKSPACE *ws, MIGRATE *mig) {
     {
       logprint3(stderr, mig->fProcessLog, ws->fErrorLog,
                 "\"%s\" is too small (%d byte%s). File may be corrupt.\n",
-                pszRelPath, istat.st_size, istat.st_size == 1 ? "" : "s");
+                pszRelPath, (int)istat.st_size, istat.st_size == 1 ? "" : "s");
       mig->cErrorZips++;
       mig->bErrorEncountered = 1;
     }
