@@ -222,7 +222,7 @@ CheckZipStatus (unz64_s * UnzipStream, WORKSPACE * ws)
 
   // Assume a TZ style archive comment and read it in. This is located at the very end of the file.
   comment_buffer[COMMENT_LENGTH] = 0;
-  if (fseeko (f, -COMMENT_LENGTH, SEEK_END))
+  if (fseeko64 (f, -COMMENT_LENGTH, SEEK_END))
     return STATUS_ERROR;
 
   fread (comment_buffer, 1, COMMENT_LENGTH, f);
@@ -239,7 +239,7 @@ CheckZipStatus (unz64_s * UnzipStream, WORKSPACE * ws)
     return STATUS_BAD_COMMENT;
 
   // Comment checks out so seek to 4 before it...
-  if (fseeko (f, -(COMMENT_LENGTH + 4), SEEK_END))
+  if (fseeko64 (f, -(COMMENT_LENGTH + 4), SEEK_END))
     return STATUS_ERROR;
 
   if (ch_length > ws->iCheckBufSize)
@@ -252,7 +252,7 @@ CheckZipStatus (unz64_s * UnzipStream, WORKSPACE * ws)
   }
 
   // Skip to start of the central header, and read it in.
-  if (fseeko (f, ch_offset, SEEK_SET))
+  if (fseeko64 (f, ch_offset, SEEK_SET))
     return STATUS_ERROR;
  
   fread (ws->pszCheckBuf, 1, ch_length, f);

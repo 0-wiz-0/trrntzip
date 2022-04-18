@@ -41,7 +41,6 @@ int getch (void);
 
 #define DIRSEP '\\'
 #define stat _stati64
-#define fseeko fseeko64
 #define off_t off64_t
 #endif
 
