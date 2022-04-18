@@ -1536,11 +1536,12 @@ extern int ZEXPORT zipCloseFileInZipRaw64 (zipFile file, ZPOS64_T uncompressed_s
     // update Current Item crc and sizes,
     if(compressed_size >= 0xffffffff || uncompressed_size >= 0xffffffff || zi->ci.pos_local_header >= 0xffffffff)
     {
+#if DISABLED_FOR_TORRENTZIP
       /*version Made by*/
       zip64local_putValue_inmemory(zi->ci.central_header+4,(uLong)45,2);
+#endif
       /*version needed*/
       zip64local_putValue_inmemory(zi->ci.central_header+6,(uLong)45,2);
-
     }
 
     zip64local_putValue_inmemory(zi->ci.central_header+16,crc32,4); /*crc*/
@@ -1551,9 +1552,11 @@ extern int ZEXPORT zipCloseFileInZipRaw64 (zipFile file, ZPOS64_T uncompressed_s
     else
       zip64local_putValue_inmemory(zi->ci.central_header+20, compressed_size,4); /*compr size*/
 
+#if DISABLED_FOR_TORRENTZIP
     /// set internal file attributes field
     if (zi->ci.stream.data_type == Z_ASCII)
         zip64local_putValue_inmemory(zi->ci.central_header+36,(uLong)Z_ASCII,2);
+#endif
 
     if(uncompressed_size >= 0xffffffff)
       zip64local_putValue_inmemory(zi->ci.central_header+24, invalidValue,4); /*uncompr size*/
