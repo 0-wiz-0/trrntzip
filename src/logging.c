@@ -67,7 +67,7 @@ logprint (FILE * stdf, FILE * f, char *format, ...)
   // Print to stdout or stderr
   if (stdf)
   {
-    fprintf (stdf, szMessageBuffer);
+    fprintf (stdf, "%s", szMessageBuffer);
     fflush(stdf);
   }
 
@@ -113,7 +113,7 @@ logprint3 (FILE * stdf, FILE * f1, FILE * f2, char *format, ...)
   // Print to stdout or stderr
   if (stdf)
   {
-    fprintf (stdf, szMessageBuffer);
+    fprintf (stdf, "%s", szMessageBuffer);
   }
 
   // Print to logfile 1

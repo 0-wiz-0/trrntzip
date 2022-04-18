@@ -688,7 +688,7 @@ GetDirFileList (const char* pszPath, int *piElements)
 
   if (dirp)
   {
-    while (direntp = readdir (dirp))
+    while ((direntp = readdir (dirp)))
     {
       if (iCount+2 >= *piElements)
       {
