@@ -53,6 +53,11 @@
 #define ftello64 ftell
 #define fseeko64 fseek
 #else
+#ifdef __APPLE__
+#define fopen64 fopen
+#define ftello64 ftello
+#define fseeko64 fseeko
+#else
 #ifdef _MSC_VER
  #define fopen64 fopen
  #if (_MSC_VER >= 1400) && (!(defined(NO_MSCVER_FILE64_FUNC)))
@@ -62,6 +67,7 @@
   #define ftello64 ftell
   #define fseeko64 fseek
  #endif
+#endif
 #endif
 #endif
 
