@@ -21,28 +21,26 @@
 
 */
 
-
+#include "zip.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <zlib.h>
-#include "zip.h"
 
 #ifdef STDC
-#  include <stddef.h>
-#  include <string.h>
-#  include <stdlib.h>
+#include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
 #endif
 #ifdef NO_ERRNO_H
-    extern int errno;
+extern int errno;
 #else
-#   include <errno.h>
+#include <errno.h>
 #endif
 
-
 #ifndef local
-#  define local static
+#define local static
 #endif
 /* compile with -Dlocal if your debugger can't find static symbols */
 
