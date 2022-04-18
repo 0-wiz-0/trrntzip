@@ -29,7 +29,7 @@ strlwr (char *s)
 {
   while (*s)
   {
-    *s = (char) tolower (*s);
+    *s = (char) tolower ((unsigned char)*s);
     ++s;
   }
   return s;
