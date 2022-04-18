@@ -12,8 +12,6 @@ e.g. with sharing zip archives using
 [BitTorrent](https://www.bittorrent.org) (which is where the name
 comes from).
 
-The original code was written by shindakun and gjefferyes.
-
 # Installation
 
 ## Requirements
@@ -29,3 +27,7 @@ The original code was written by shindakun and gjefferyes.
 * cmake ..
 * make
 * make install
+
+# Status
+
+[![build](https://github.com/0-wiz-0/trrntzip/actions/workflows/build.yml/badge.svg)](https://github.com/0-wiz-0/trrntzip/actions/workflows/build.yml)
