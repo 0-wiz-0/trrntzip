@@ -950,8 +950,7 @@ int main(int argc, char **argv) {
         fprintf(stdout, "Copyright (C) 2012 TorrentZip Team :\n");
         fprintf(stdout, "StatMat, shindakun, Ultrasubmarine, r3nh03k, "
                         "goosecreature, gordonj\n");
-        fprintf(stdout,
-                "Homepage : http://sourceforge.net/projects/trrntzip\n\n");
+        fprintf(stdout, "Homepage : https://github.com/0-wiz-0/trrntzip\n\n");
         fprintf(stdout, "Usage: trrntzip [-dfghsv] [PATH/ZIP FILE]\n\n");
         fprintf(stdout, "Options:\n\n");
         fprintf(stdout, "-h : show this help\n");
