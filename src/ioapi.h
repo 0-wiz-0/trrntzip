@@ -40,6 +40,10 @@
         #endif
 #endif
 
+#ifdef __NetBSD__
+#define USE_FILE32API
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "zlib.h"
