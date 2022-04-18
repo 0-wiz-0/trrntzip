@@ -26,7 +26,7 @@ char **DynamicStringArrayResize(char **StringArray, int *piElements,
                                 int iNewElements);
 void DynamicStringArrayCheck(char **StringArray, int iElements);
 #ifdef NDEBUG
-#define CHECK_DYNAMIC_STRING_ARRAY(StringArray, iElements) (void *)0
+#define CHECK_DYNAMIC_STRING_ARRAY(StringArray, iElements)
 #else
 #define CHECK_DYNAMIC_STRING_ARRAY(StringArray, iElements)                     \
   DynamicStringArrayCheck(StringArray, iElements)
