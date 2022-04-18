@@ -945,20 +945,21 @@ int main(int argc, char **argv) {
 
       switch (argv[iCount][1]) {
       case '?':
+      case 'h':
         fprintf(stdout, "\nTorrentZip v%s\n\n", TZ_VERSION);
         fprintf(stdout, "Copyright (C) 2012 TorrentZip Team :\n");
         fprintf(stdout, "StatMat, shindakun, Ultrasubmarine, r3nh03k, "
                         "goosecreature, gordonj\n");
         fprintf(stdout,
                 "Homepage : http://sourceforge.net/projects/trrntzip\n\n");
-        fprintf(stdout, "Usage: trrntzip [OPTIONS] [PATH/ZIP FILE]\n\n");
+        fprintf(stdout, "Usage: trrntzip [-dfghsv] [PATH/ZIP FILE]\n\n");
         fprintf(stdout, "Options:\n\n");
-        fprintf(stdout, "-? : show this help\n");
+        fprintf(stdout, "-h : show this help\n");
         fprintf(stdout, "-d : strip sub-directories from zips\n");
-        fprintf(stdout, "-s : prevent sub-directory recursion\n");
         fprintf(stdout, "-f : force re-zip\n");
-        fprintf(stdout, "-v : show version\n");
         fprintf(stdout, "-g : pause when finished\n");
+        fprintf(stdout, "-s : prevent sub-directory recursion\n");
+        fprintf(stdout, "-v : show version\n");
         return TZ_OK;
 
       case 'd':
@@ -994,7 +995,7 @@ int main(int argc, char **argv) {
 
   if (argc < 2 || iOptionsFound == (argc - 1)) {
     fprintf(stderr, "\ntrrntzip: missing path\n");
-    fprintf(stderr, "Usage: trrntzip [OPTIONS] [PATH/ZIP FILE]\n");
+    fprintf(stderr, "Usage: trrntzip [-dfghsv] [PATH/ZIP FILE]\n");
     return TZ_ERR;
   }
 
