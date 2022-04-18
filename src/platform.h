@@ -45,22 +45,28 @@ int getch(void);
 #endif
 
 #ifndef HAVE_FOPEN64
+#ifndef fopen64
 #define fopen64 fopen
+#endif
 #endif
 
 #ifndef HAVE_FSEEKO64
+#ifndef fseeko64
 #ifdef HAVE_FSEEKO
 #define fseeko64 fseeko
 #else
 #define fseeko64 fseek
 #endif
 #endif
+#endif
 
 #ifndef HAVE_FTELLO64
+#ifndef ftello64
 #ifdef HAVE_FTELLO
 #define ftello64 ftello
 #else
 #define ftello64 ftell
+#endif
 #endif
 #endif
 

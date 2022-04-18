@@ -50,10 +50,16 @@
 #define ftello64 ftell
 #define fseeko64 fseek
 #else
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__NetBSD__)
+#ifndef fopen64
 #define fopen64 fopen
+#endif
+#ifndef ftello64
 #define ftello64 ftello
+#endif
+#ifndef fseeko64
 #define fseeko64 fseeko
+#endif
 #endif
 #ifdef _MSC_VER
  #define fopen64 fopen
