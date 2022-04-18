@@ -44,4 +44,24 @@ int getch(void);
 #define off_t off64_t
 #endif
 
+#ifndef HAVE_FOPEN64
+#define fopen64 fopen
+#endif
+
+#ifndef HAVE_FSEEKO64
+#ifdef HAVE_FSEEKO
+#define fseeko64 fseeko
+#else
+#define fseeko64 fseek
+#endif
+#endif
+
+#ifndef HAVE_FTELLO64
+#ifdef HAVE_FTELLO
+#define ftello64 ftello
+#else
+#define ftello64 ftell
+#endif
+#endif
+
 #endif
