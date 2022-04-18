@@ -17,7 +17,7 @@ comes from).
 ## Requirements
 
 * A C compiler (e.g. gcc or clang)
-* [zlib](http://zlib.net/) at least version 1.2.2
+* [zlib](http://zlib.net/) (at least version 1.2.2)
 * [CMake](https://cmake.org/)
 
 ## Building
