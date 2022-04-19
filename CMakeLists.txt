@@ -10,7 +10,7 @@ Dist(${CMAKE_PROJECT_NAME}-${CMAKE_PROJECT_VERSION})
 
 include(CheckFunctionExists)
 
-find_package(ZLIB 1.2.2 REQUIRED)
+find_package(ZLIB 1.2.11 REQUIRED)
 
 check_function_exists(fseeko HAVE_FSEEKO)
 check_function_exists(fseeko64 HAVE_FSEEKO64)
