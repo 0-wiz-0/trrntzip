@@ -90,6 +90,7 @@ char *pszStartPath = NULL;
 char qForceReZip = 0;
 char qGUILaunch = 0;
 char qNoRecursion = 0;
+char qQuietMode = 0;
 char qStripSubdirs = 0;
 
 // Global flag to determine if any zipfile errors were detected
@@ -427,8 +428,10 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
     if (ZipHasDirEntry(ws)) {
       rc = STATUS_CONTAINS_DIRS;
     } else {
-      logprint(stdout, mig->fProcessLog,
-               "Skipping, already TorrentZipped - %s\n", szZipFileName);
+      if (!qQuietMode) {
+	logprint(stdout, mig->fProcessLog,
+		 "Skipping, already TorrentZipped - %s\n", szZipFileName);
+      }
       unzClose(UnZipHandle);
       return TZ_SKIPPED;
     }
@@ -951,12 +954,13 @@ int main(int argc, char **argv) {
         fprintf(stdout, "StatMat, shindakun, Ultrasubmarine, r3nh03k, "
                         "goosecreature, gordonj\n");
         fprintf(stdout, "Homepage : https://github.com/0-wiz-0/trrntzip\n\n");
-        fprintf(stdout, "Usage: trrntzip [-dfghsv] [PATH/ZIP FILE]\n\n");
+        fprintf(stdout, "Usage: trrntzip [-dfghqsv] [PATH/ZIP FILE]\n\n");
         fprintf(stdout, "Options:\n\n");
         fprintf(stdout, "-h : show this help\n");
         fprintf(stdout, "-d : strip sub-directories from zips\n");
         fprintf(stdout, "-f : force re-zip\n");
         fprintf(stdout, "-g : pause when finished\n");
+        fprintf(stdout, "-q : quiet mode\n");
         fprintf(stdout, "-s : prevent sub-directory recursion\n");
         fprintf(stdout, "-v : show version\n");
         return TZ_OK;
@@ -966,25 +970,30 @@ int main(int argc, char **argv) {
         qStripSubdirs = 1;
         break;
 
-      case 's':
-        // Disable dir recursion
-        qNoRecursion = 1;
-        break;
-
       case 'f':
         // Force rezip
         qForceReZip = 1;
+        break;
+
+      case 'g':
+        // GUI launch process
+        qGUILaunch = 1;
+        break;
+
+      case 'q':
+	// Quiet mode - show less messages while running
+	qQuietMode = 1;
+	break;
+
+      case 's':
+        // Disable dir recursion
+        qNoRecursion = 1;
         break;
 
       case 'v':
         // GUI requesting TZ version
         fprintf(stdout, "TorrentZip v%s\n", TZ_VERSION);
         return TZ_OK;
-
-      case 'g':
-        // GUI launch process
-        qGUILaunch = 1;
-        break;
 
       default:
         fprintf(stderr, "Unknown option : %s\n", argv[iCount]);
