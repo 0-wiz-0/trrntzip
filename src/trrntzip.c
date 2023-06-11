@@ -1003,7 +1003,7 @@ int main(int argc, char **argv) {
 
   if (argc < 2 || iOptionsFound == (argc - 1)) {
     fprintf(stderr, "\ntrrntzip: missing path\n");
-    fprintf(stderr, "Usage: trrntzip [-dfghsv] [PATH/ZIP FILE]\n");
+    fprintf(stderr, "Usage: trrntzip [-dfghqsv] [PATH/ZIP FILE]\n");
     return TZ_ERR;
   }
 
