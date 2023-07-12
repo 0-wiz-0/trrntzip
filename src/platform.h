@@ -30,6 +30,8 @@
 /* Cygwin doesn't have cfmakeraw */
 #if defined(__CYGWIN__)
 void cfmakeraw(struct termios *);
+#else
+#include <termios.h>
 #endif /* defined(__CYGWIN__) */
 
 #define DIRSEP '/'
