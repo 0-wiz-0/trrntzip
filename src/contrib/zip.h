@@ -411,8 +411,7 @@ extern int ZEXPORT zipCloseFileInZipRaw64 OF((zipFile file,
   uncompressed_size and crc32 are value for the uncompressed size
 */
 
-extern int ZEXPORT zipClose OF((zipFile file,
-                const char* global_comment));
+extern int ZEXPORT zipClose OF((zipFile file, const char *global_comment, int is_zip64));
 /*
   Close the zipfile
 */

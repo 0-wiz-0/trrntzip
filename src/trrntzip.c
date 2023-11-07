@@ -594,7 +594,7 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
   if (error) {
     fprintf(mig->fProcessLog, "Not done\n");
     unzClose(UnZipHandle);
-    zipClose(ZipHandle, NULL);
+    zipClose(ZipHandle, NULL, zip64);
     remove(TMP_FILENAME);
     return TZ_ERR;
   }
@@ -616,7 +616,7 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
   // Set the global file comment, so that we know to skip this file in future
   snprintf(szTmpBuf, sizeof(szTmpBuf), "%s%08lX", gszApp, crc);
 
-  rc = zipClose(ZipHandle, szTmpBuf);
+  rc = zipClose(ZipHandle, szTmpBuf, zip64);
 
   if (rc != UNZ_OK) {
     logprint3(
