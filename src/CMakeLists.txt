@@ -1,5 +1,6 @@
 file(GLOB SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/*.c ${CMAKE_CURRENT_SOURCE_DIR}/contrib/*.c)
 add_executable(trrntzip ${SOURCES})
+target_compile_definitions(trrntzip PRIVATE "TZ_VERSION=\"${PROJECT_VERSION}\"")
 target_include_directories(trrntzip PRIVATE BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/contrib)
 target_link_libraries(trrntzip m ZLIB::ZLIB)
 install(TARGETS trrntzip EXPORT ${PROJECT_NAME}-targets DESTINATION bin)

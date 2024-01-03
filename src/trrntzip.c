@@ -42,8 +42,9 @@
 #include "logging.h"
 #include "util.h"
 
-// We must change this at every new version
-#define TZ_VERSION "0.9"
+#ifndef TZ_VERSION
+#error "Build system must define TZ_VERSION"
+#endif
 
 #define MEGABYTE 1048576
 #define ARRAY_ELEMENTS 256
