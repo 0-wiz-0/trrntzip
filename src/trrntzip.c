@@ -80,7 +80,7 @@ void DisplayMigrateSummary(MIGRATE *mig);
 
 // The created zip file global comment used to identify files
 // This will be appended with the CRC32 of the central directory
-const static char *gszApp = {"TORRENTZIPPED-"};
+static const char *gszApp = {"TORRENTZIPPED-"};
 
 // Stores the path we startup in. This is so we can write logs to the right
 // place
