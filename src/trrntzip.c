@@ -117,7 +117,7 @@ WORKSPACE *AllocateWorkspace(void) {
   ws->pszCheckBuf = malloc(ws->iBufSize);
 
   if (ws->pszCheckBuf == NULL) {
-    free(ws->pszCheckBuf);
+    free(ws->pszUncompBuf);
     free(ws);
     return NULL;
   }
