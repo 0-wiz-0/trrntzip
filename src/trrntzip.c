@@ -217,7 +217,8 @@ int CheckZipStatus(unz64_s *UnzipStream, WORKSPACE *ws) {
   if (fseeko64(f, -COMMENT_LENGTH, SEEK_END))
     return STATUS_ERROR;
 
-  fread(comment_buffer, 1, COMMENT_LENGTH, f);
+  if (fread(comment_buffer, 1, COMMENT_LENGTH, f) != COMMENT_LENGTH)
+    return STATUS_ERROR;
 
   // Check static portion of comment.
   if (strncmp(gszApp, comment_buffer, COMMENT_LENGTH - 8))
@@ -246,7 +247,8 @@ int CheckZipStatus(unz64_s *UnzipStream, WORKSPACE *ws) {
   if (fseeko64(f, ch_offset, SEEK_SET))
     return STATUS_ERROR;
 
-  fread(ws->pszCheckBuf, 1, ch_length, f);
+  if ((off_t)fread(ws->pszCheckBuf, 1, ch_length, f) != ch_length)
+    return STATUS_ERROR;
 
   // Calculate the crc32 of the central header.
   checksum = crc32(crc32(0L, NULL, 0), ws->pszCheckBuf, ch_length);
