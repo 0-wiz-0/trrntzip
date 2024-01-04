@@ -960,7 +960,7 @@ int main(int argc, char **argv) {
         fprintf(stdout, "-h : show this help\n");
         fprintf(stdout, "-d : strip sub-directories from zips\n");
         fprintf(stdout, "-f : force re-zip\n");
-        fprintf(stdout, "-g : pause when finished\n");
+        fprintf(stdout, "-g : skip interactive prompts\n");
         fprintf(stdout, "-q : quiet mode\n");
         fprintf(stdout, "-s : prevent sub-directory recursion\n");
         fprintf(stdout, "-v : show version\n");
