@@ -18,7 +18,9 @@
 #ifndef UTIL_DOT_H
 #define UTIL_DOT_H
 
+int CanonicalCmp(const char *s1, const char *s2);
 int StringCompare(const void *str1, const void *str2);
+int BasenameCompare(const void *str1, const void *str2);
 int EndsWithCaseInsensitive(const char *str1, const char *str2);
 char **DynamicStringArrayCreate(int iElements);
 char **DynamicStringArrayDestroy(char **StringArray, int iElements);

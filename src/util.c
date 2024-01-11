@@ -26,10 +26,26 @@
 #include "global.h"
 #include "util.h"
 
+// The canonical order is case insensitive, but we need a tie-breaker
+// to avoid ambiguity
+int CanonicalCmp(const char *s1, const char *s2) {
+  int res = strcasecmp(s1, s2);
+  return res ? res : strcmp(s1, s2);
+}
+
 int StringCompare(const void *str1, const void *str2) {
-  const char **p1 = (const char **)str1;
-  const char **p2 = (const char **)str2;
-  return (strcasecmp(*p1, *p2));
+  const char *p1 = *(const char **)str1;
+  const char *p2 = *(const char **)str2;
+  return CanonicalCmp(p1, p2);
+}
+
+// No tie-breaker for leading dirs required, names must be unique
+int BasenameCompare(const void *str1, const void *str2) {
+  const char *p1 = *(const char **)str1;
+  const char *p2 = *(const char **)str2;
+  const char *b1 = strrchr(p1, '/');
+  const char *b2 = strrchr(p2, '/');
+  return CanonicalCmp(b1 ? b1 + 1 : p1, b2 ? b2 + 1 : p2);
 }
 
 int EndsWithCaseInsensitive(const char *str1, const char *str2) {

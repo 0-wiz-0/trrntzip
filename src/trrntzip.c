@@ -53,9 +53,11 @@
 #define DIVIDER "--------------------------------------------------"
 #define TMP_FILENAME "trrntzip-XXXXXX"
 
-// CheckZipStatus return codes
+// CheckZipStatus (and related) return codes
+#define STATUS_FORCE_REZIP -8   // Has proper comment, but rezip is forced
+#define STATUS_WRONG_ORDER -7   // Entries aren't in canonical order
 #define STATUS_BAD_SLASHES -6   // Zip has \ characters instead of / characters
-#define STATUS_CONTAINS_DIRS -5 // Zip has DIR entries that need deleted
+#define STATUS_CONTAINS_DIRS -5 // Zip has redundant DIR entries or subdirs
 #define STATUS_ALLOC_ERROR -4   // Couldn't allocate memory.
 #define STATUS_ERROR -3         // Corrupted zipfile or file is not a zipfile.
 #define STATUS_BAD_COMMENT                                                     \
@@ -66,13 +68,16 @@
 
 WORKSPACE *AllocateWorkspace(void);
 void FreeWorkspace(WORKSPACE *ws);
-int StringCompare(const void *str1, const void *str2);
 char **GetFileList(unzFile UnZipHandle, char **FileNameArray, int *piElements);
 int CheckZipStatus(unz64_s *UnzipStream, WORKSPACE *ws);
 int ShouldFileBeRemoved(int iArray, WORKSPACE *ws);
 int ZipHasDirEntry(WORKSPACE *ws);
+static int ZipHasSubdirs(WORKSPACE *ws);
+static int ZipHasWrongOrder(WORKSPACE *ws);
+int FindAndFixBadSlashes(WORKSPACE *ws);
 int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
                MIGRATE *mig);
+char **GetDirFileList(const char *pszPath, int *piElements);
 int RecursiveMigrate(const char *pszRelPath, WORKSPACE *ws, MIGRATE *mig);
 int RecursiveMigrateDir(const char *pszRelPath, WORKSPACE *ws);
 int RecursiveMigrateTop(const char *pszRelPath, WORKSPACE *ws);
@@ -160,8 +165,7 @@ void FreeWorkspace(WORKSPACE *ws) {
   free(ws);
 }
 
-// Get the filelist from the zip file in canonical order
-// Returns a sorted array
+// Returns the file list from the zip file in original order
 char **GetFileList(unzFile UnZipHandle, char **FileNameArray, int *piElements) {
   int rc = 0;
   int iCount = 0;
@@ -191,9 +195,6 @@ char **GetFileList(unzFile UnZipHandle, char **FileNameArray, int *piElements) {
   }
 
   FileNameArray[iCount][0] = 0;
-
-  // Sort the dynamic array into canonical order
-  qsort(FileNameArray, iCount, sizeof(char **), StringCompare);
 
   return (FileNameArray);
 }
@@ -290,6 +291,26 @@ int ZipHasDirEntry(WORKSPACE *ws) {
   return 0;
 }
 
+static int ZipHasSubdirs(WORKSPACE *ws) {
+  int iArray;
+  for (iArray = 0; *ws->FileNameArray[iArray]; iArray++)
+    if (strchr(ws->FileNameArray[iArray], '/'))
+      return 1;
+  return 0;
+}
+
+// detect zipfiles that aren't in canonical order
+// older trrntzip didn't always sort properly
+static int ZipHasWrongOrder(WORKSPACE *ws) {
+  int iArray;
+  if (*ws->FileNameArray[0])
+    for (iArray = 1; *ws->FileNameArray[iArray]; iArray++)
+      if (CanonicalCmp(ws->FileNameArray[iArray - 1],
+                       ws->FileNameArray[iArray]) >= 0)
+        return 1;
+  return 0;
+}
+
 int FindAndFixBadSlashes(WORKSPACE *ws) {
   int slashFound = 0;
 
@@ -321,7 +342,6 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
 
   // Used for our dynamic filename array
   int iArray = 0;
-  int iArray2 = 0;
 
   int rc = 0;
   int error = 0;
@@ -407,7 +427,7 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
   }
 
   CHECK_DYNAMIC_STRING_ARRAY(ws->FileNameArray, ws->iElements);
-  // Get the filelist from the zip file in canonical order
+  // Get the filelist from the zip file in original order
   ws->FileNameArray =
       GetFileList(UnZipHandle, ws->FileNameArray, &ws->iElements);
 
@@ -426,20 +446,33 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
   if (FindAndFixBadSlashes(ws))
     rc = STATUS_BAD_SLASHES;
 
-  if (rc == STATUS_OK && !qForceReZip) {
-    // check if the zip has any dir entries that need removed
-    if (ZipHasDirEntry(ws)) {
-      rc = STATUS_CONTAINS_DIRS;
-    } else {
-      if (!qQuietMode) {
-	logprint(stdout, mig->fProcessLog,
-		 "Skipping, already TorrentZipped - %s\n", szZipFileName);
-      }
-      unzClose(UnZipHandle);
-      return TZ_SKIPPED;
+  if (rc == STATUS_OK && qForceReZip)
+    rc = STATUS_FORCE_REZIP;
+
+  if (rc == STATUS_OK && ZipHasWrongOrder(ws))
+    rc = STATUS_WRONG_ORDER;
+
+  // Sort filelist into canonical order
+  for (iArray = 0; iArray < ws->iElements && ws->FileNameArray[iArray][0];
+       iArray++);
+  qsort(ws->FileNameArray, iArray, sizeof(char *),
+        qStripSubdirs ? BasenameCompare : StringCompare);
+
+  // Check if the zip has redundant directories
+  if (rc == STATUS_OK && qStripSubdirs ? ZipHasSubdirs(ws) : ZipHasDirEntry(ws))
+    rc = STATUS_CONTAINS_DIRS;
+
+  // All checks passed, zip is up to date - skip it!
+  if (rc == STATUS_OK) {
+    if (!qQuietMode) {
+      logprint(stdout, mig->fProcessLog,
+               "Skipping, already TorrentZipped - %s\n", szZipFileName);
     }
+    unzClose(UnZipHandle);
+    return TZ_SKIPPED;
   }
 
+  // ReZip it!
   logprint(stdout, mig->fProcessLog, "Rezipping - %s\n", szZipFileName);
   logprint(stdout, mig->fProcessLog, "%s\n", DIVIDER);
 
@@ -473,50 +506,51 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
       break;
     }
 
-    // check if the file is a DIR entry that should be removed
-    if (ShouldFileBeRemoved(iArray, ws)) {
-      // remove this file.
-      logprint(stdout, mig->fProcessLog, "Directory %s Removed\n", szFileName);
-      continue;
-    }
-
     // files >= 4G need to be zip64
     if (ZipInfo.uncompressed_size >= 0xFFFFFFFF)
       zip64 = 1;
-
-    logprint(stdout, mig->fProcessLog, "Adding - %s (%" PRIu64 " bytes%s)...",
-             szFileName, ZipInfo.uncompressed_size, (zip64 ? ", Zip64" : ""));
 
     if (qStripSubdirs) {
       // To strip off path if there is one
       pszZipName = strrchr(szFileName, '/');
 
       if (pszZipName) {
-        if (!*(pszZipName + 1))
-          continue; // Last char was '/' so is dir entry. Skip it.
+        if (!*++pszZipName) {
+          // Last char was '/' so is dir entry. Skip it.
+          logprint(stdout, mig->fProcessLog,
+                   "Directory %s Removed\n", szFileName);
+          continue;
+        }
 
-        pszZipName = pszZipName + 1;
+        strcpy(ws->FileNameArray[iArray], pszZipName);
       } else
         pszZipName = szFileName;
-
-      strcpy(ws->FileNameArray[iArray], pszZipName);
-
-      // Search for duplicate files
-      for (iArray2 = iArray - 1; iArray2 >= 0; iArray2--) {
-        if (!strcmp(pszZipName, ws->FileNameArray[iArray2])) {
-          error = 1;
-          break;
-        }
-      }
-
-      if (error) {
-        logprint3(stderr, mig->fProcessLog, ws->fErrorLog,
-                  "Zip file \"%s\" contains more than one file named \"%s\"\n",
-                  szZipFileName, pszZipName);
-        break;
-      }
-    } else
+    } else {
       pszZipName = szFileName;
+
+      // check if the file is a DIR entry that should be removed
+      if (ShouldFileBeRemoved(iArray, ws)) {
+        // remove this file.
+        logprint(stdout, mig->fProcessLog,
+                 "Directory %s Removed\n", szFileName);
+        continue;
+      }
+    }
+
+    // Check for duplicate files (but allow files differing only in case)
+    if (iArray > 0 && !strcmp(pszZipName, ws->FileNameArray[iArray - 1])) {
+      logprint3(stderr, mig->fProcessLog, ws->fErrorLog,
+                "Zip file \"%s\" contains more than one file named \"%s\"\n",
+                szZipFileName, pszZipName);
+      error = 1;
+      break;
+    }
+
+    logprint(stdout, mig->fProcessLog,
+             "Adding - %s (%" PRIu64 " bytes%s%s%s)...",
+             pszZipName, ZipInfo.uncompressed_size, (zip64 ? ", Zip64" : ""),
+             (pszZipName == szFileName ? "" : ", was: "),
+             (pszZipName == szFileName ? "" : szFileName));
 
     rc = zipOpenNewFileInZip64(ZipHandle, pszZipName, &ws->zi, NULL, 0, NULL, 0,
                                NULL, Z_DEFLATED, Z_BEST_COMPRESSION, zip64);
@@ -710,7 +744,7 @@ char **GetDirFileList(const char *pszPath, int *piElements) {
   FileNameArray[iCount][0] = 0;
 
   // Sort the dynamic array into canonical order
-  qsort(FileNameArray, iCount, sizeof(char **), StringCompare);
+  qsort(FileNameArray, iCount, sizeof(char *), StringCompare);
 
   return (FileNameArray);
 }
