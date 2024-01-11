@@ -260,24 +260,22 @@ int CheckZipStatus(unz64_s *UnzipStream, WORKSPACE *ws) {
 // check if the zip file entry is a directory that should be removed
 // directory should not be removed if it is an empty directory
 int ShouldFileBeRemoved(int iArray, WORKSPACE *ws) {
-  char *pszZipName = NULL;
-  pszZipName = strrchr(ws->FileNameArray[iArray], '/');
+  int len;
+  const char *entry = ws->FileNameArray[iArray];
+  const char *slash = strrchr(entry, '/');
 
-  // if '/' found and it is the last character in the filename
-  if (pszZipName && !*(pszZipName + 1)) {
-    // If not the last file
-    if (strlen(ws->FileNameArray[iArray + 1])) {
-      int c = 0;
-      while (ws->FileNameArray[iArray][c] == ws->FileNameArray[iArray + 1][c] &&
-             ws->FileNameArray[iArray][c] && ws->FileNameArray[iArray + 1][c])
-        c++;
+  if (!slash || slash[1]) // not a directory
+    return 0;
 
-      if (!ws->FileNameArray[iArray][c]) {
-        // dirs need removed
-        return 1;
-      }
-    }
-  }
+  len = slash - entry + 1;
+  // Although the list is sorted, checking the next entry isn't sufficient.
+  // Entries with different case can appear between the directory and the
+  // files inside (e.g. A/, a/, A/x, a/y).
+  do {
+    if (!strncmp(entry, ws->FileNameArray[++iArray], len))
+      return 1; // can be removed
+  } while (!strncasecmp(entry, ws->FileNameArray[iArray], len));
+
   return 0;
 }
 
