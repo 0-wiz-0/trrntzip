@@ -373,16 +373,6 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
     snprintf(szZipFileName, sizeof(szZipFileName), "%s%c%s", pDir, DIRSEP,
              zip_path);
   }
-  mktemp(szTmpZipFileName);
-
-  if (!access(szTmpZipFileName, F_OK) && remove(szTmpZipFileName)) {
-    logprint3(
-        stderr, mig->fProcessLog, ws->fErrorLog,
-        "\n!!!! Temporary file exists and could not be automatically removed. "
-        "Please remove the file %s and re-run this program. !!!!\n",
-        szTmpZipFileName);
-    return TZ_CRITICAL;
-  }
 
   if (access(szZipFileName, R_OK | W_OK)) {
     logprint3(stderr, mig->fProcessLog, ws->fErrorLog,
@@ -479,6 +469,25 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
   // ReZip it!
   logprint(stdout, mig->fProcessLog, "Rezipping - %s\n", szZipFileName);
   logprint(stdout, mig->fProcessLog, "%s\n", DIVIDER);
+
+  // This use of mktemp() is inherently unsafe! Better use mkstemp()
+  // if available, or at least ensure the file is created with O_EXCL.
+  // Also note that failure may be indicated either by returning NULL
+  // or by setting the template to "".
+  if (!mktemp(szTmpZipFileName))
+    szTmpZipFileName[0] = 0;
+
+  if (!szTmpZipFileName[0] || !access(szTmpZipFileName, F_OK)) {
+    logprint3(
+        stderr, mig->fProcessLog, ws->fErrorLog,
+        "\n!!!! Couldn't create a unique temporary file%s. !!!!\n",
+        szTmpZipFileName[0] ? ", another process created it faster. "
+        "Running several instances of trrntzip concurrently on the same "
+        "directories can lead to data corruption" : "");
+    unzClose(UnZipHandle);
+    return TZ_CRITICAL;
+  }
+  // RACE CONDITION HERE!
 
   if ((ZipHandle = zipOpen64(szTmpZipFileName, 0)) == NULL) {
     logprint3(
@@ -636,7 +645,7 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
     fprintf(mig->fProcessLog, "Not done\n");
     unzClose(UnZipHandle);
     zipClose(ZipHandle, NULL, zip64);
-    remove(TMP_FILENAME);
+    remove(szTmpZipFileName);
     return TZ_ERR;
   }
 
@@ -691,9 +700,7 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
     logprint3(
         stderr, mig->fProcessLog, ws->fErrorLog,
         "!!!! Could not rename temporary file \"%s\" to \"%s\". The original "
-        "file has already been deleted, "
-        "so you must rename this file manually before re-running the program. "
-        "Failure to do so will cause you to lose the contents of the file.\n",
+        "file has already been deleted, so you must rename this file manually.\n",
         szTmpZipFileName, szZipFileName);
 #else
     logprint3(stderr, mig->fProcessLog, ws->fErrorLog,
