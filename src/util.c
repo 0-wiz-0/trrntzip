@@ -110,9 +110,12 @@ char **DynamicStringArrayResize(char **StringArray, int *piElements,
     free(StringArray[iCount]);
   }
   TmpPtr = StringArray;
+  iCount = iNewElements < *piElements ? iNewElements : *piElements;
   StringArray = (char **)realloc(StringArray, iNewElements * sizeof(char *));
-  if (!StringArray)
-    return DynamicStringArrayDestroy(TmpPtr, *piElements);
+  if (!StringArray) {
+    *piElements = 0;
+    return DynamicStringArrayDestroy(TmpPtr, iCount);
+  }
 
   for (iCount = *piElements; iCount < iNewElements; iCount++) {
     StringArray[iCount] = (char *)malloc(MAX_PATH + 1);
@@ -120,8 +123,10 @@ char **DynamicStringArrayResize(char **StringArray, int *piElements,
     // Check for error with above alloc
     // If there is, free up everything we managed to alloc
     // and return error
-    if (!StringArray[iCount])
+    if (!StringArray[iCount]) {
+      *piElements = 0;
       return DynamicStringArrayDestroy(StringArray, iCount);
+    }
     StringArray[iCount][0] = 0;
   }
   *piElements = iNewElements;
@@ -132,15 +137,21 @@ char **DynamicStringArrayResize(char **StringArray, int *piElements,
 }
 
 void DynamicStringArrayCheck(char **StringArray, int iElements) {
+#ifndef NDEBUG
   // All StringArray elements should be non-null,
   // because they were all allocated by DynamicStringArrayCreate.
   int i, l;
+  assert(StringArray || iElements == 0);
   for (i = 0; i < iElements; ++i) {
     assert(StringArray[i]);
     l = strlen(StringArray[i]);
     assert(l >= 0);
     assert(l <= MAX_PATH);
   }
+#else
+  (void)StringArray;
+  (void)iElements;
+#endif
 }
 
 char *get_cwd(void) {

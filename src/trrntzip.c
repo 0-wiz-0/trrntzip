@@ -159,8 +159,7 @@ WORKSPACE *AllocateWorkspace(void) {
 void FreeWorkspace(WORKSPACE *ws) {
   if (ws->FileNameArray)
     DynamicStringArrayDestroy(ws->FileNameArray, ws->iElements);
-  if (ws->pszCheckBuf != NULL)
-    free(ws->pszCheckBuf);
+  free(ws->pszCheckBuf);
   free(ws->pszUncompBuf);
   free(ws);
 }
@@ -181,8 +180,14 @@ char **GetFileList(unzFile UnZipHandle, char **FileNameArray, int *piElements) {
     // the filenames, so we have to grow the array size
     if ((iCount + 2) >= *piElements) {
       // Grow array geometrically.
+      unsigned int iNewElements = *piElements * 2U;
+      if ((int)iNewElements < 0)
+        return NULL;
+      // May be zero if last allocation failed, so ensure minimum.
+      if (iNewElements < ARRAY_ELEMENTS)
+        iNewElements = ARRAY_ELEMENTS;
       FileNameArray =
-          DynamicStringArrayResize(FileNameArray, piElements, *piElements * 2);
+          DynamicStringArrayResize(FileNameArray, piElements, iNewElements);
       if (!FileNameArray)
         return NULL;
     }
@@ -237,11 +242,12 @@ int CheckZipStatus(unz64_s *UnzipStream, WORKSPACE *ws) {
     return STATUS_ERROR;
 
   if (ch_length > ws->iCheckBufSize) {
-    ws->pszCheckBuf = realloc(ws->pszCheckBuf, ch_length + 1024);
-    if (ws->pszCheckBuf == NULL)
+    unsigned char *newbuf = realloc(ws->pszCheckBuf, ch_length + 1024);
+    if (!newbuf)
       return STATUS_ALLOC_ERROR;
-    else
-      ws->iCheckBufSize = ch_length + 1024;
+
+    ws->pszCheckBuf = newbuf;
+    ws->iCheckBufSize = ch_length + 1024;
   }
 
   // Skip to start of the central header, and read it in.
@@ -730,8 +736,10 @@ char **GetDirFileList(const char *pszPath, int *piElements) {
         // Grow array geometrically.
         FileNameArray = DynamicStringArrayResize(FileNameArray, piElements,
                                                  *piElements * 2);
-        if (!FileNameArray)
+        if (!FileNameArray) {
+          closedir(dirp);
           return NULL;
+        }
       }
       strncpy(FileNameArray[iCount], direntp->d_name, MAX_PATH + 1);
       iCount++;
