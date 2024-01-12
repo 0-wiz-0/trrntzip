@@ -214,7 +214,7 @@ int CheckZipStatus(unz64_s *UnzipStream, WORKSPACE *ws) {
 
   // Quick check that the file at least appears to be a zip file.
   rewind(f);
-  if (fgetc(f) != 'P' && fgetc(f) != 'K')
+  if (fgetc(f) != 'P' || fgetc(f) != 'K')
     return STATUS_ERROR;
 
   // Assume a TZ style archive comment and read it in. This is located at the
