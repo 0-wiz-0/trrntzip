@@ -915,6 +915,8 @@ int RecursiveMigrateDir(const char *pszRelPath, WORKSPACE *ws) {
 
   if (rc != TZ_CRITICAL)
     DisplayMigrateSummary(&mig);
+  if (mig.fProcessLog)
+    fclose(mig.fProcessLog);
 
   return rc == TZ_CRITICAL ? TZ_CRITICAL : TZ_OK;
 }
@@ -947,12 +949,9 @@ void DisplayMigrateSummary(MIGRATE *mig) {
       logprint(
           stdout, mig->fProcessLog,
           "!!!! There were problems! See \"%serror.log\" for details! !!!!\n",
-          pszStartPath);
+          ""); // pszStartPath not used (yet) by OpenErrorLog()!
       qErrors = 1;
     }
-
-    fclose(mig->fProcessLog);
-    mig->fProcessLog = 0;
   }
 }
 
@@ -980,6 +979,8 @@ int RecursiveMigrateTop(const char *pszRelPath, WORKSPACE *ws) {
 
   if (rc != TZ_CRITICAL)
     DisplayMigrateSummary(&mig);
+  if (mig.fProcessLog)
+    fclose(mig.fProcessLog);
 
   return rc == TZ_CRITICAL ? TZ_CRITICAL : TZ_OK;
 }
@@ -1090,10 +1091,19 @@ int main(int argc, char **argv) {
   ws->fErrorLog = OpenErrorLog(qGUILaunch);
 
   if (ws->fErrorLog) {
+    char qLogEmpty;
     // Start process for each passed path/zip file
     for (iCount = iOptionsFound + 1; iCount < argc; iCount++) {
       rc = RecursiveMigrateTop(argv[iCount], ws);
+      if (rc == TZ_CRITICAL) {
+        qErrors = 1;
+        break;
+      }
     }
+
+    // The error log may contain messages from a different run.
+    fseeko64(ws->fErrorLog, 0, SEEK_END);
+    qLogEmpty = (ftello64(ws->fErrorLog) == 0);
 
     fclose(ws->fErrorLog);
 
@@ -1108,9 +1118,17 @@ int main(int argc, char **argv) {
         getch();
       }
 #endif
-    } else {
-      snprintf(szErrorLogFileName, sizeof(szErrorLogFileName), "%s%c%s",
-               pszStartPath, DIRSEP, "error.log");
+    } else if (qLogEmpty) {
+      // pszStartPath is not used (yet) by OpenErrorLog()
+      // keep the commented code (and stupid replacement) as a reminder
+      //snprintf(szErrorLogFileName, sizeof(szErrorLogFileName), "%s%c%s",
+      //         pszStartPath, DIRSEP, "error.log");
+      snprintf(szErrorLogFileName, sizeof(szErrorLogFileName), "%s", "error.log");
+
+      // Removing the log file which could still be open and written to by a
+      // different process is a bad idea. Deferring error log creation until
+      // the first error message gets printed would avoid the issue since
+      // there'd be no need to ever remove the log.
       remove(szErrorLogFileName);
     }
   }
