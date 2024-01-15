@@ -78,7 +78,8 @@ int FindAndFixBadSlashes(WORKSPACE *ws);
 int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
                MIGRATE *mig);
 static char **GetDirFileList(DIR *dirp, int *piElements);
-int RecursiveMigrate(const char *pszRelPath, WORKSPACE *ws, MIGRATE *mig);
+static int RecursiveMigrate(const char *pszRelPath, const struct stat *pstat,
+                            WORKSPACE *ws, MIGRATE *mig);
 int RecursiveMigrateDir(const char *pszRelPath, WORKSPACE *ws);
 int RecursiveMigrateTop(const char *pszRelPath, WORKSPACE *ws);
 void DisplayMigrateSummary(MIGRATE *mig);
@@ -755,13 +756,12 @@ static char **GetDirFileList(DIR *dirp, int *piElements) {
 }
 
 // Function to convert a dir or zip
-int RecursiveMigrate(const char *pszRelPath, WORKSPACE *ws, MIGRATE *mig) {
+static int RecursiveMigrate(const char *pszRelPath, const struct stat *pstat,
+                            WORKSPACE *ws, MIGRATE *mig) {
   int rc = 0;
 
   char szRelPathBuf[MAX_PATH + 1];
   const char *pszFileName = NULL;
-
-  struct stat istat;
 
   pszFileName = strrchr(pszRelPath, DIRSEP);
   if (pszFileName) {
@@ -773,25 +773,16 @@ int RecursiveMigrate(const char *pszRelPath, WORKSPACE *ws, MIGRATE *mig) {
     pszFileName = pszRelPath;
   }
 
-  rc = lstat(pszRelPath, &istat);
-  if (rc)
-    logprint(stderr, ws->fErrorLog, "Could not stat \"%s\". %s\n", pszRelPath,
-             strerror(errno));
+  if (S_ISDIR(pstat->st_mode)) {
+    // Get our execution time (in seconds)
+    // for the conversion process so far
+    mig->ExecTime += difftime(time(NULL), mig->StartTime);
 
-  if (S_ISDIR(istat.st_mode)) {
-    if (!qNoRecursion && strcmp(pszFileName, ".") &&
-        strcmp(pszFileName, "..")) {
-      // Get our execution time (in seconds)
-      // for the conversion process so far
-      mig->ExecTime += difftime(time(NULL), mig->StartTime);
+    rc = RecursiveMigrateDir(pszRelPath, ws);
 
-      rc = RecursiveMigrateDir(pszRelPath, ws);
-
-      // Restart the timing for this instance of RecursiveMigrate()
-      mig->StartTime = time(NULL);
-    }
-  } else if (S_ISREG(istat.st_mode) &&
-             EndsWithCaseInsensitive(pszFileName, ".zip") == 0) {
+    // Restart the timing for this instance of RecursiveMigrate()
+    mig->StartTime = time(NULL);
+  } else { // if (S_ISREG(pstat->st_mode))? Users get what they ask for.
     mig->cEncounteredZips++;
 
     if (!mig->fProcessLog) {
@@ -804,7 +795,8 @@ int RecursiveMigrate(const char *pszRelPath, WORKSPACE *ws, MIGRATE *mig) {
         return TZ_CRITICAL;
     }
 
-    if (istat.st_size > COMMENT_LENGTH) {
+    // minimum size of an empty zip file is 22 bytes, non-empty 98 bytes
+    if (pstat->st_size >= 22) {
       rc = MigrateZip(pszFileName, szRelPathBuf, ws, mig);
 
       switch (rc) {
@@ -820,11 +812,15 @@ int RecursiveMigrate(const char *pszRelPath, WORKSPACE *ws, MIGRATE *mig) {
       case TZ_SKIPPED:
         mig->cOkayZips++;
       }
-    } else // Too small to be a valid zip file.
-    {
-      logprint3(stderr, mig->fProcessLog, ws->fErrorLog,
-                "\"%s\" is too small (%d byte%s). File may be corrupt.\n",
-                pszRelPath, (int)istat.st_size, istat.st_size == 1 ? "" : "s");
+    } else { // Too small to be a valid zip file.
+      if (pstat->st_size)
+        logprint3(stderr, mig->fProcessLog, ws->fErrorLog,
+                  "\"%s\" is too small (%d byte%s). File may be corrupt.\n",
+                  pszRelPath, (int)pstat->st_size,
+                  pstat->st_size == 1 ? "" : "s");
+      else
+        logprint3(stderr, mig->fProcessLog, ws->fErrorLog,
+                  "\"%s\" is empty. Skipping.\n", pszRelPath);
       mig->cErrorZips++;
       mig->bErrorEncountered = 1;
     }
@@ -874,10 +870,32 @@ int RecursiveMigrateDir(const char *pszRelPath, WORKSPACE *ws) {
 
       for (iCounter = 0; (iCounter < iElements && FileNameArray[iCounter][0]);
            iCounter++) {
+        struct stat istat;
+
+        // Construct full path
         snprintf(szTmpBuf + FileNameStartPos,
                  sizeof(szTmpBuf) - FileNameStartPos, "%s",
                  FileNameArray[iCounter]);
-        rc = RecursiveMigrate(szTmpBuf, ws, &mig);
+
+        // Don't follow symlinks during recursion
+        if (lstat(szTmpBuf, &istat)) {
+          logprint3(stderr, mig.fProcessLog, ws->fErrorLog,
+                    "Could not stat \"%s\". %s\n", szTmpBuf, strerror(errno));
+          continue;
+        }
+
+        // Only process regular .zip files and directories (unless recursion is
+        // disabled). Skip other files right here.
+        if (S_ISDIR(istat.st_mode)) {
+          if (qNoRecursion || !strcmp(FileNameArray[iCounter], ".") ||
+              !strcmp(FileNameArray[iCounter], ".."))
+            continue;
+        } else if (!S_ISREG(istat.st_mode) ||
+                   EndsWithCaseInsensitive(FileNameArray[iCounter], ".zip")) {
+          continue;
+        }
+
+        rc = RecursiveMigrate(szTmpBuf, &istat, ws, &mig);
         if (rc == TZ_CRITICAL)
           break;
       }
@@ -933,13 +951,21 @@ void DisplayMigrateSummary(MIGRATE *mig) {
 
 int RecursiveMigrateTop(const char *pszRelPath, WORKSPACE *ws) {
   int rc;
-  MIGRATE mig;
   char szRelPathBuf[MAX_PATH + 1];
   int n;
-
-  memset(&mig, 0, sizeof(MIGRATE));
+  struct stat istat;
+  MIGRATE mig = {};
 
   mig.StartTime = time(NULL);
+
+  // Follow symlinks for direct command line arguments. Process any file
+  // regardless of type and name.
+  if (stat(pszRelPath, &istat)) {
+    logprint(stderr, ws->fErrorLog, "Could not stat \"%s\". %s\n", pszRelPath,
+             strerror(errno));
+    qErrors = 1;
+    return TZ_ERR;
+  }
 
   n = strlen(pszRelPath);
   if (n > 0 && pszRelPath[n - 1] == DIRSEP) {
@@ -948,7 +974,7 @@ int RecursiveMigrateTop(const char *pszRelPath, WORKSPACE *ws) {
     pszRelPath = szRelPathBuf;
   }
 
-  rc = RecursiveMigrate(pszRelPath, ws, &mig);
+  rc = RecursiveMigrate(pszRelPath, &istat, ws, &mig);
 
   // Get our execution time (in seconds) for the conversion process
   mig.ExecTime += difftime(time(NULL), mig.StartTime);
