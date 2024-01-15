@@ -781,7 +781,7 @@ int RecursiveMigrate(const char *pszRelPath, WORKSPACE *ws, MIGRATE *mig) {
     pszFileName = pszRelPath;
   }
 
-  rc = stat(pszRelPath, &istat);
+  rc = lstat(pszRelPath, &istat);
   if (rc)
     logprint(stderr, ws->fErrorLog, "Could not stat \"%s\". %s\n", pszRelPath,
              strerror(errno));
@@ -798,7 +798,8 @@ int RecursiveMigrate(const char *pszRelPath, WORKSPACE *ws, MIGRATE *mig) {
       // Restart the timing for this instance of RecursiveMigrate()
       mig->StartTime = time(NULL);
     }
-  } else if (EndsWithCaseInsensitive(pszFileName, ".zip") == 0) {
+  } else if (S_ISREG(istat.st_mode) &&
+             EndsWithCaseInsensitive(pszFileName, ".zip") == 0) {
     mig->cEncounteredZips++;
 
     if (!mig->fProcessLog) {
