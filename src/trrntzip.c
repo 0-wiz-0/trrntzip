@@ -77,7 +77,7 @@ static int ZipHasWrongOrder(WORKSPACE *ws);
 int FindAndFixBadSlashes(WORKSPACE *ws);
 int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
                MIGRATE *mig);
-char **GetDirFileList(const char *pszPath, int *piElements);
+static char **GetDirFileList(DIR *dirp, int *piElements);
 int RecursiveMigrate(const char *pszRelPath, WORKSPACE *ws, MIGRATE *mig);
 int RecursiveMigrateDir(const char *pszRelPath, WORKSPACE *ws);
 int RecursiveMigrateTop(const char *pszRelPath, WORKSPACE *ws);
@@ -722,11 +722,10 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
   return TZ_OK;
 }
 
-// Get the filelist from the pszPath directory in canonical order
+// Get the filelist from the open dirp directory in canonical order
 // Returns a sorted array
-char **GetDirFileList(const char *pszPath, int *piElements) {
+static char **GetDirFileList(DIR *dirp, int *piElements) {
   int iCount = 0;
-  DIR *dirp = NULL;
   struct dirent *direntp = NULL;
   char **FileNameArray = 0;
 
@@ -735,23 +734,16 @@ char **GetDirFileList(const char *pszPath, int *piElements) {
   if (!FileNameArray)
     return NULL;
 
-  dirp = opendir(pszPath);
-
-  if (dirp) {
-    while ((direntp = readdir(dirp))) {
-      if (iCount + 2 >= *piElements) {
-        // Grow array geometrically.
-        FileNameArray = DynamicStringArrayResize(FileNameArray, piElements,
-                                                 *piElements * 2);
-        if (!FileNameArray) {
-          closedir(dirp);
-          return NULL;
-        }
-      }
-      strncpy(FileNameArray[iCount], direntp->d_name, MAX_PATH + 1);
-      iCount++;
+  while ((direntp = readdir(dirp))) {
+    if (iCount + 2 >= *piElements) {
+      // Grow array geometrically.
+      FileNameArray = DynamicStringArrayResize(FileNameArray, piElements,
+                                               *piElements * 2);
+      if (!FileNameArray)
+        return NULL;
     }
-    closedir(dirp);
+    strncpy(FileNameArray[iCount], direntp->d_name, MAX_PATH + 1);
+    iCount++;
   }
 
   FileNameArray[iCount][0] = 0;
@@ -853,24 +845,10 @@ int RecursiveMigrateDir(const char *pszRelPath, WORKSPACE *ws) {
   int FileNameStartPos;
 
   DIR *dirp = NULL;
-  struct stat istat;
-  MIGRATE mig;
-
-  memset(&mig, 0, sizeof(MIGRATE));
+  MIGRATE mig = {};
 
   // Get our start time for the conversion process of this dir/zip
   mig.StartTime = time(NULL);
-
-  stat(pszRelPath, &istat);
-
-  if (!S_ISDIR(istat.st_mode)) {
-    logprint(
-        stderr, ws->fErrorLog,
-        "Internal error: RecursiveMigrateDir called on non-directory \"%s\"!\n",
-        pszRelPath);
-    mig.bErrorEncountered = 1;
-    return TZ_CRITICAL;
-  }
 
   // Couldn't access specified path
   dirp = opendir(pszRelPath);
@@ -879,11 +857,9 @@ int RecursiveMigrateDir(const char *pszRelPath, WORKSPACE *ws) {
              pszRelPath, strerror(errno));
     mig.bErrorEncountered = 1;
   } else {
+    FileNameArray = GetDirFileList(dirp, &iElements);
     closedir(dirp);
-  }
 
-  if (!mig.bErrorEncountered) {
-    FileNameArray = GetDirFileList(pszRelPath, &iElements);
     if (!FileNameArray) {
       logprint(stderr, ws->fErrorLog, "Error allocating memory!\n");
       rc = TZ_CRITICAL;
