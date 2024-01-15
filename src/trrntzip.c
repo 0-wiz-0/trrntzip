@@ -54,9 +54,8 @@
 #define TMP_FILENAME "trrntzip-XXXXXX"
 
 // CheckZipStatus (and related) return codes
-#define STATUS_FORCE_REZIP -8   // Has proper comment, but rezip is forced
-#define STATUS_WRONG_ORDER -7   // Entries aren't in canonical order
-#define STATUS_BAD_SLASHES -6   // Zip has \ characters instead of / characters
+#define STATUS_FORCE_REZIP -7   // Has proper comment, but rezip is forced
+#define STATUS_WRONG_ORDER -6   // Entries aren't in canonical order
 #define STATUS_CONTAINS_DIRS -5 // Zip has redundant DIR entries or subdirs
 #define STATUS_ALLOC_ERROR -4   // Couldn't allocate memory.
 #define STATUS_ERROR -3         // Corrupted zipfile or file is not a zipfile.
@@ -74,7 +73,6 @@ int ShouldFileBeRemoved(int iArray, WORKSPACE *ws);
 int ZipHasDirEntry(WORKSPACE *ws);
 static int ZipHasSubdirs(WORKSPACE *ws);
 static int ZipHasWrongOrder(WORKSPACE *ws);
-int FindAndFixBadSlashes(WORKSPACE *ws);
 int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
                MIGRATE *mig);
 static char **GetDirFileList(DIR *dirp, int *piElements);
@@ -316,23 +314,6 @@ static int ZipHasWrongOrder(WORKSPACE *ws) {
   return 0;
 }
 
-int FindAndFixBadSlashes(WORKSPACE *ws) {
-  int slashFound = 0;
-
-  int iArray = 0;
-  for (iArray = 0; strlen(ws->FileNameArray[iArray]); iArray++) {
-    int c = 0;
-    while (ws->FileNameArray[iArray][c]) {
-      if (ws->FileNameArray[iArray][c] == '\\') {
-        ws->FileNameArray[iArray][c] = '/';
-        slashFound = 1;
-      }
-      c++;
-    }
-  }
-  return slashFound;
-}
-
 int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
                MIGRATE *mig) {
   unz_file_info64 ZipInfo;
@@ -435,11 +416,6 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
     unzClose(UnZipHandle);
     return TZ_CRITICAL;
   }
-
-  // check if the zip has any \ characters in the filename that should be
-  // changed to / the \ is an invalid directory, and should always be /
-  if (FindAndFixBadSlashes(ws))
-    rc = STATUS_BAD_SLASHES;
 
   if (rc == STATUS_OK && qForceReZip)
     rc = STATUS_FORCE_REZIP;
