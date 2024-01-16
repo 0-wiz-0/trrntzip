@@ -18,7 +18,7 @@ comes from).
 
 * A C compiler (e.g. gcc or clang)
 * [zlib](http://zlib.net/) (at least version 1.2.2)
-* [CMake](https://cmake.org/)
+* [CMake](https://cmake.org/) (at least version 3.5)
 
 ## Building
 
