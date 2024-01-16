@@ -28,6 +28,11 @@ comes from).
 * make
 * make install
 
+# Packages
+
+* [Gentoo](https://github.com/gentoo/gentoo/tree/master/app-arch/torrentzip)
+* [pkgsrc](https://github.com/NetBSD/pkgsrc/tree/trunk/archivers/trrntzip)
+
 # Status
 
 [![build](https://github.com/0-wiz-0/trrntzip/actions/workflows/build.yml/badge.svg)](https://github.com/0-wiz-0/trrntzip/actions/workflows/build.yml)
