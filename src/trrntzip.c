@@ -871,7 +871,7 @@ int RecursiveMigrateDir(const char *pszRelPath, WORKSPACE *ws) {
               !strcmp(FileNameArray[iCounter], ".."))
             continue;
         } else if (!S_ISREG(istat.st_mode) ||
-                   EndsWithCaseInsensitive(FileNameArray[iCounter], ".zip")) {
+                   !EndsWithCaseInsensitive(FileNameArray[iCounter], ".zip")) {
           continue;
         }
 

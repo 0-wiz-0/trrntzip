@@ -48,15 +48,13 @@ int BasenameCompare(const void *str1, const void *str2) {
   return CanonicalCmp(b1 ? b1 + 1 : p1, b2 ? b2 + 1 : p2);
 }
 
-int EndsWithCaseInsensitive(const char *str1, const char *str2) {
-  int n1, n2;
-  n1 = strlen(str1);
-  n2 = strlen(str2);
-  if (n2 < n1) {
-    return strcasecmp(str1 + n1 - n2, str2);
-  } else {
-    return strcasecmp(str1, str2 + n2 - n1);
-  }
+int EndsWithCaseInsensitive(const char *str, const char *tail) {
+  int n1 = strlen(str), n2 = strlen(tail);
+
+  if (n1 < n2)
+    return 0;
+  else
+    return !strcasecmp(str + n1 - n2, tail);
 }
 
 // Create a dynamic string array
