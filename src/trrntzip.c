@@ -457,7 +457,7 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
   if (!szTmpZipFileName[0] || !access(szTmpZipFileName, F_OK)) {
     logprint3(
         stderr, mig->fProcessLog, ws->fErrorLog,
-        "\n!!!! Couldn't create a unique temporary file%s. !!!!\n",
+        "!!!! Couldn't create a unique temporary file%s. !!!!\n",
         szTmpZipFileName[0] ? ", another process created it faster. "
         "Running several instances of trrntzip concurrently on the same "
         "directories can lead to data corruption" : "");
@@ -979,7 +979,7 @@ int main(int argc, char **argv) {
       switch (argv[iCount][1]) {
       case '?':
       case 'h':
-        fprintf(stdout, "\nTorrentZip v%s\n\n", TZ_VERSION);
+        fprintf(stdout, "TorrentZip v%s\n\n", TZ_VERSION);
         fprintf(stdout, "Copyright (C) 2012 TorrentZip Team :\n");
         fprintf(stdout, "StatMat, shindakun, Ultrasubmarine, r3nh03k, "
                         "goosecreature, gordonj\n");
@@ -1032,7 +1032,7 @@ int main(int argc, char **argv) {
   }
 
   if (argc < 2 || iOptionsFound == (argc - 1)) {
-    fprintf(stderr, "\ntrrntzip: missing path\n");
+    fprintf(stderr, "trrntzip: missing path\n");
     fprintf(stderr, "Usage: trrntzip [-dfghqsv] [PATH/ZIP FILE]\n");
     return TZ_ERR;
   }
