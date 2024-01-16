@@ -21,7 +21,9 @@
 int CanonicalCmp(const char *s1, const char *s2);
 int StringCompare(const void *str1, const void *str2);
 int BasenameCompare(const void *str1, const void *str2);
+
 int EndsWithCaseInsensitive(const char *str, const char *tail);
+
 char **DynamicStringArrayCreate(int iElements);
 char **DynamicStringArrayDestroy(char **StringArray, int iElements);
 char **DynamicStringArrayResize(char **StringArray, int *piElements,
@@ -33,5 +35,7 @@ void DynamicStringArrayCheck(char **StringArray, int iElements);
 #define CHECK_DYNAMIC_STRING_ARRAY(StringArray, iElements)                     \
   DynamicStringArrayCheck(StringArray, iElements)
 #endif
+
 char *get_cwd(void);
+const char *UpdateFile(const char *dest, const char *tmpfile);
 #endif

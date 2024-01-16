@@ -648,51 +648,21 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
 
   rc = zipClose(ZipHandle, szTmpBuf, zip64);
 
-  if (rc != UNZ_OK) {
+  if (rc == UNZ_OK) {
+    const char *pErr = UpdateFile(szZipFileName, szTmpZipFileName);
+    if (pErr) {
+      logprint3(stderr, mig->fProcessLog, ws->fErrorLog,
+                "!!!! Could not rename temporary file \"%s\" to \"%s\". %s\n",
+                szTmpZipFileName, szZipFileName, pErr);
+      return TZ_CRITICAL;
+    }
+  } else {
     logprint3(
         stderr, mig->fProcessLog, ws->fErrorLog,
         "Unable to close temporary zip file \"%s\" - cannot process \"%s\"!\n",
         szTmpZipFileName, szZipFileName);
     remove(szTmpZipFileName);
     return TZ_ERR;
-  }
-
-#ifdef WIN32
-  // This is here because rename does not atomically replace
-  // an existing destination on WIN32.
-  if (remove(szZipFileName)) {
-    logprint3(
-        stderr, mig->fProcessLog, ws->fErrorLog,
-        "!!!! Unable to remove \"%s\" for replacement with rezipped copy.\n",
-        szZipFileName);
-    if (remove(szTmpZipFileName))
-      logprint3(stderr, mig->fProcessLog, ws->fErrorLog,
-                "!!!! Could not remove temporary file \"%s\".\n",
-                szTmpZipFileName);
-
-    return TZ_ERR;
-  }
-#endif
-
-  // rename atomically replaces the destination if it exists.
-  if (rename(szTmpZipFileName, szZipFileName)) {
-#ifdef WIN32
-    logprint3(
-        stderr, mig->fProcessLog, ws->fErrorLog,
-        "!!!! Could not rename temporary file \"%s\" to \"%s\". The original "
-        "file has already been deleted, so you must rename this file "
-        "manually.\n",
-        szTmpZipFileName, szZipFileName);
-#else
-    logprint3(stderr, mig->fProcessLog, ws->fErrorLog,
-              "!!!! Could not rename temporary file \"%s\" to \"%s\".\n",
-              szTmpZipFileName, szZipFileName);
-    if (remove(szTmpZipFileName))
-      logprint3(stderr, mig->fProcessLog, ws->fErrorLog,
-                "!!!! Could not remove temporary file \"%s\".\n",
-                szTmpZipFileName);
-#endif
-    return TZ_CRITICAL;
   }
 
   logprint(stdout, mig->fProcessLog,

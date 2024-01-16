@@ -15,9 +15,11 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #define NDEBUG
@@ -177,4 +179,43 @@ char *get_cwd(void) {
   }
 
   return pszCWD;
+}
+
+// Replaces file dest with tmpfile.
+// Returns NULL on success or an error message.
+const char *UpdateFile(const char *dest, const char *tmpfile) {
+#ifdef WIN32
+  // On WIN32, rename() fails if the destination exists. So we have to remove
+  // the destination first.
+  if (remove(dest)) {
+    if (remove(tmpfile))
+      return "Unable to remove either destination or temporary file. "
+             "Please replace the file manually.";
+    else
+      return "Unable to remove destination for replacement (temporary "
+             "file removed)."
+  }
+  if (rename(tmpfile, dest))
+    return "The original file has already been deleted, so you must rename "
+           "this file manually.";
+
+#else // !WIN32, assume POSIX semantics
+
+  // Try to preserve permissions but ignore errors
+  struct stat st;
+  if (!stat(dest, &st))
+    chmod(tmpfile, st.st_mode & ~S_IFMT);
+
+  // On a POSIX system, rename() atomically replaces the destination if
+  // it exists.
+  if (rename(tmpfile, dest)) {
+    if (remove(tmpfile))
+      return "Also could not remove temporary file. "
+             "Please replace the file manually.";
+    else
+      return strerror(errno);
+  }
+#endif
+
+  return NULL; // success
 }
