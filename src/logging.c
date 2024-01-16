@@ -153,9 +153,9 @@ int OpenProcessLog(const char *pszWritePath, const char *pszRelPath,
   }
 
   snprintf(szLogname, sizeof(szLogname),
-           "%s[%s]_[%04d-%02d-%02d - %02d-%02d-%02d].log",
-           pszWritePath, pszDirname, t->tm_year + 1900, t->tm_mon + 1,
-           t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);
+           "%s[%s]_[%04d-%02d-%02d - %02d-%02d-%02d].log", pszWritePath,
+           pszDirname, t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour,
+           t->tm_min, t->tm_sec);
 
   mig->fProcessLog = OpenLog(szLogname);
 

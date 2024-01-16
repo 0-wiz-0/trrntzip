@@ -425,7 +425,8 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
 
   // Sort filelist into canonical order
   for (iArray = 0; iArray < ws->iElements && ws->FileNameArray[iArray][0];
-       iArray++);
+       iArray++)
+    ;
   qsort(ws->FileNameArray, iArray, sizeof(char *),
         qStripSubdirs ? BasenameCompare : StringCompare);
 
@@ -458,9 +459,11 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
     logprint3(
         stderr, mig->fProcessLog, ws->fErrorLog,
         "!!!! Couldn't create a unique temporary file%s. !!!!\n",
-        szTmpZipFileName[0] ? ", another process created it faster. "
-        "Running several instances of trrntzip concurrently on the same "
-        "directories can lead to data corruption" : "");
+        szTmpZipFileName[0]
+            ? ", another process created it faster. "
+              "Running several instances of trrntzip concurrently on the same "
+              "directories can lead to data corruption"
+            : "");
     unzClose(UnZipHandle);
     return TZ_CRITICAL;
   }
@@ -507,8 +510,8 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
       if (pszZipName) {
         if (!*++pszZipName) {
           // Last char was '/' so is dir entry. Skip it.
-          logprint(stdout, mig->fProcessLog,
-                   "Directory %s Removed\n", szFileName);
+          logprint(stdout, mig->fProcessLog, "Directory %s Removed\n",
+                   szFileName);
           continue;
         }
 
@@ -521,8 +524,8 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
       // check if the file is a DIR entry that should be removed
       if (ShouldFileBeRemoved(iArray, ws)) {
         // remove this file.
-        logprint(stdout, mig->fProcessLog,
-                 "Directory %s Removed\n", szFileName);
+        logprint(stdout, mig->fProcessLog, "Directory %s Removed\n",
+                 szFileName);
         continue;
       }
     }
@@ -537,8 +540,8 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
     }
 
     logprint(stdout, mig->fProcessLog,
-             "Adding - %s (%" PRIu64 " bytes%s%s%s)...",
-             pszZipName, ZipInfo.uncompressed_size, (zip64 ? ", Zip64" : ""),
+             "Adding - %s (%" PRIu64 " bytes%s%s%s)...", pszZipName,
+             ZipInfo.uncompressed_size, (zip64 ? ", Zip64" : ""),
              (pszZipName == szFileName ? "" : ", was: "),
              (pszZipName == szFileName ? "" : szFileName));
 
@@ -677,7 +680,8 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
     logprint3(
         stderr, mig->fProcessLog, ws->fErrorLog,
         "!!!! Could not rename temporary file \"%s\" to \"%s\". The original "
-        "file has already been deleted, so you must rename this file manually.\n",
+        "file has already been deleted, so you must rename this file "
+        "manually.\n",
         szTmpZipFileName, szZipFileName);
 #else
     logprint3(stderr, mig->fProcessLog, ws->fErrorLog,
@@ -714,8 +718,8 @@ static char **GetDirFileList(DIR *dirp, int *piElements) {
   while ((direntp = readdir(dirp))) {
     if (iCount + 2 >= *piElements) {
       // Grow array geometrically.
-      FileNameArray = DynamicStringArrayResize(FileNameArray, piElements,
-                                               *piElements * 2);
+      FileNameArray =
+          DynamicStringArrayResize(FileNameArray, piElements, *piElements * 2);
       if (!FileNameArray)
         return NULL;
     }
@@ -1011,9 +1015,9 @@ int main(int argc, char **argv) {
         break;
 
       case 'q':
-	// Quiet mode - show less messages while running
-	qQuietMode = 1;
-	break;
+        // Quiet mode - show less messages while running
+        qQuietMode = 1;
+        break;
 
       case 's':
         // Disable dir recursion
@@ -1099,9 +1103,10 @@ int main(int argc, char **argv) {
     } else if (qLogEmpty) {
       // pszStartPath is not used (yet) by OpenErrorLog()
       // keep the commented code (and stupid replacement) as a reminder
-      //snprintf(szErrorLogFileName, sizeof(szErrorLogFileName), "%s%c%s",
+      // snprintf(szErrorLogFileName, sizeof(szErrorLogFileName), "%s%c%s",
       //         pszStartPath, DIRSEP, "error.log");
-      snprintf(szErrorLogFileName, sizeof(szErrorLogFileName), "%s", "error.log");
+      snprintf(szErrorLogFileName, sizeof(szErrorLogFileName), "%s",
+               "error.log");
 
       // Removing the log file which could still be open and written to by a
       // different process is a bad idea. Deferring error log creation until
