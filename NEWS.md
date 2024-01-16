@@ -1,4 +1,4 @@
-# x.x.x [20xx-xx-xx]
+# 1.1 [2024-01-16]
 
 * zip64 format: zip64 EOCD was missing in some cases
 * add -q flag to reduce log output
