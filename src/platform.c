@@ -48,13 +48,13 @@ void cfmakeraw(struct termios *termios_p) {
 // Not sure if this is the best way to implement this, but it works.
 int getch(void) {
   struct termios t, t2;
-  char c = 0;
+  int c;
 
   tcgetattr(1, &t);
   t2 = t;
   cfmakeraw(&t2);
   tcsetattr(1, TCSANOW, &t2);
-  fread(&c, 1, 1, stdin);
+  c = getchar();
   tcsetattr(1, TCSANOW, &t);
 
   return c;

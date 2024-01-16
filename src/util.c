@@ -26,10 +26,26 @@
 #include "global.h"
 #include "util.h"
 
+// The canonical order is case insensitive, but we need a tie-breaker
+// to avoid ambiguity
+int CanonicalCmp(const char *s1, const char *s2) {
+  int res = strcasecmp(s1, s2);
+  return res ? res : strcmp(s1, s2);
+}
+
 int StringCompare(const void *str1, const void *str2) {
-  const char **p1 = (const char **)str1;
-  const char **p2 = (const char **)str2;
-  return (strcasecmp(*p1, *p2));
+  const char *p1 = *(const char **)str1;
+  const char *p2 = *(const char **)str2;
+  return CanonicalCmp(p1, p2);
+}
+
+// No tie-breaker for leading dirs required, names must be unique
+int BasenameCompare(const void *str1, const void *str2) {
+  const char *p1 = *(const char **)str1;
+  const char *p2 = *(const char **)str2;
+  const char *b1 = strrchr(p1, '/');
+  const char *b2 = strrchr(p2, '/');
+  return CanonicalCmp(b1 ? b1 + 1 : p1, b2 ? b2 + 1 : p2);
 }
 
 int EndsWithCaseInsensitive(const char *str1, const char *str2) {
@@ -94,9 +110,12 @@ char **DynamicStringArrayResize(char **StringArray, int *piElements,
     free(StringArray[iCount]);
   }
   TmpPtr = StringArray;
+  iCount = iNewElements < *piElements ? iNewElements : *piElements;
   StringArray = (char **)realloc(StringArray, iNewElements * sizeof(char *));
-  if (!StringArray)
-    return DynamicStringArrayDestroy(TmpPtr, *piElements);
+  if (!StringArray) {
+    *piElements = 0;
+    return DynamicStringArrayDestroy(TmpPtr, iCount);
+  }
 
   for (iCount = *piElements; iCount < iNewElements; iCount++) {
     StringArray[iCount] = (char *)malloc(MAX_PATH + 1);
@@ -104,8 +123,10 @@ char **DynamicStringArrayResize(char **StringArray, int *piElements,
     // Check for error with above alloc
     // If there is, free up everything we managed to alloc
     // and return error
-    if (!StringArray[iCount])
+    if (!StringArray[iCount]) {
+      *piElements = 0;
       return DynamicStringArrayDestroy(StringArray, iCount);
+    }
     StringArray[iCount][0] = 0;
   }
   *piElements = iNewElements;
@@ -116,15 +137,21 @@ char **DynamicStringArrayResize(char **StringArray, int *piElements,
 }
 
 void DynamicStringArrayCheck(char **StringArray, int iElements) {
+#ifndef NDEBUG
   // All StringArray elements should be non-null,
   // because they were all allocated by DynamicStringArrayCreate.
   int i, l;
+  assert(StringArray || iElements == 0);
   for (i = 0; i < iElements; ++i) {
     assert(StringArray[i]);
     l = strlen(StringArray[i]);
     assert(l >= 0);
     assert(l <= MAX_PATH);
   }
+#else
+  (void)StringArray;
+  (void)iElements;
+#endif
 }
 
 char *get_cwd(void) {

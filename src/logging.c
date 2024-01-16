@@ -32,7 +32,7 @@ static FILE *OpenLog(const char *szFileName);
 // Global var to store if the logprint func is expecting more
 // data to complete a line. This prevents the timestamp being
 // multipally inserted before a line terminates in a logfile.
-char continueline = 0;
+static char continueline = 0;
 
 // Used to print to screen and file at the same time
 void logprint(FILE *stdf, FILE *f, char *format, ...) {
@@ -122,55 +122,46 @@ void logprint3(FILE *stdf, FILE *f1, FILE *f2, char *format, ...) {
 int OpenProcessLog(const char *pszWritePath, const char *pszRelPath,
                    MIGRATE *mig) {
   int iPathLen = 0;
-  time_t now;
-  struct tm *t;
+  time_t now = time(NULL);
+  struct tm *t = localtime(&now);
   char szLogname[MAX_PATH + 1];
   char szRelPathBuf[MAX_PATH + 1];
   char *pszDirname = NULL;
 
-  now = time(NULL);
-  t = localtime(&now);
-
   if (pszRelPath) {
     iPathLen = strlen(pszRelPath);
 
-    if (iPathLen > 1) {
-      snprintf(szRelPathBuf, sizeof(szRelPathBuf), "%s", pszRelPath);
-      // Strip off the last slash
-      if (szRelPathBuf[iPathLen - 1] == DIRSEP) {
-        szRelPathBuf[iPathLen - 1] = 0;
-      }
+    // Strip off trailing slashes
+    while (iPathLen > 0 && pszRelPath[iPathLen - 1] == DIRSEP)
+      iPathLen--;
+#ifdef WIN32
+    if (iPathLen > 0 && pszRelPath[iPathLen - 1] == ':')
+      iPathLen--;
+#endif
+    snprintf(szRelPathBuf, sizeof(szRelPathBuf), "%.*s", iPathLen, pszRelPath);
 
-      pszDirname = strrchr(szRelPathBuf, DIRSEP);
-      if (pszDirname) {
-        pszDirname++;
-      } else {
-        pszDirname = szRelPathBuf;
-      }
+    pszDirname = strrchr(szRelPathBuf, DIRSEP);
+    if (pszDirname)
+      pszDirname++;
+    else
+      pszDirname = szRelPathBuf;
 
-      if (szRelPathBuf[iPathLen - 2] == ':') {
-        szRelPathBuf[iPathLen - 2] = 0;
-        pszDirname = szRelPathBuf;
-      }
-    } else {
-      snprintf(szRelPathBuf, sizeof(szRelPathBuf), "%s", "");
-      // FIXME!
-      // Note that pszDirname is not assigned!
-      // Therefore szLogname comes up as (null), which is a nice kind of
-      // undefined behaviour!
-    }
+    if (!*pszDirname)
+      pszDirname = "-";
+  } else {
+    pszDirname = "-";
   }
 
   snprintf(szLogname, sizeof(szLogname),
-           "%s[%s]_[%04d-%02d-%02d - %02d-%02d-%02d]", pszWritePath, pszDirname,
-           t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min,
-           t->tm_sec);
+           "%s[%s]_[%04d-%02d-%02d - %02d-%02d-%02d].log",
+           pszWritePath, pszDirname, t->tm_year + 1900, t->tm_mon + 1,
+           t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);
 
   mig->fProcessLog = OpenLog(szLogname);
 
   if (mig->fProcessLog) {
     fprintf(mig->fProcessLog, "TorrentZip processing logfile for : \"%s\"\n",
-            szRelPathBuf);
+            pszRelPath);
   }
 
   return mig->fProcessLog ? TZ_OK : TZ_CRITICAL;
@@ -194,20 +185,14 @@ FILE *OpenErrorLog(char qGUILaunch) {
     }
   }
 
-  return (OpenLog("error"));
+  return OpenLog("error.log");
 }
 
 static FILE *OpenLog(const char *szFileName) {
-  FILE *f = NULL;
-  char szLog[strlen(szFileName) + 5];
-
-  strcpy(szLog, szFileName);
-  strcat(szLog, ".log");
-
-  f = fopen(szLog, "w");
+  FILE *f = fopen(szFileName, "a");
 
   if (!f) {
-    fprintf(stderr, "Could not open log file '%s'!\n", szLog);
+    fprintf(stderr, "Could not open log file '%s'!\n", szFileName);
   }
 
   return f;

@@ -43,6 +43,7 @@ int getch(void);
 
 #define DIRSEP '\\'
 #define stat _stati64
+#define lstat stat
 #define off_t off64_t
 #endif
 
