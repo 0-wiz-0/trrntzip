@@ -321,6 +321,7 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
   unz64_s *UnzipStream = NULL;
   zipFile ZipHandle = NULL;
   int zip64 = 0;
+  int tmpfd;
 
   // Used for CRC32 calc of central directory during rezipping
   zip64_internal *zintinfo;
@@ -448,33 +449,27 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
   logprint(stdout, mig->fProcessLog, "Rezipping - %s\n", szZipFileName);
   logprint(stdout, mig->fProcessLog, "%s\n", DIVIDER);
 
-  // This use of mktemp() is inherently unsafe! Better use mkstemp()
-  // if available, or at least ensure the file is created with O_EXCL.
-  // Also note that failure may be indicated either by returning NULL
-  // or by setting the template to "".
-  if (!mktemp(szTmpZipFileName))
-    szTmpZipFileName[0] = 0;
-
-  if (!szTmpZipFileName[0] || !access(szTmpZipFileName, F_OK)) {
+  tmpfd = mkstemp(szTmpZipFileName);
+  if (tmpfd < 0) {
     logprint3(
         stderr, mig->fProcessLog, ws->fErrorLog,
-        "!!!! Couldn't create a unique temporary file%s. !!!!\n",
-        szTmpZipFileName[0]
-            ? ", another process created it faster. "
-              "Running several instances of trrntzip concurrently on the same "
-              "directories can lead to data corruption"
-            : "");
+        "!!!! Couldn't create a unique temporary file. %s. !!!!\n",
+        strerror(errno));
     unzClose(UnZipHandle);
     return TZ_CRITICAL;
   }
-  // RACE CONDITION HERE!
+  // Close the file and let zipOpen64() reopen it. It can't be accidentally
+  // claimed by a different process since it already exists on disk. If an
+  // attacker is able to replace it, we've lost anyway.
+  close(tmpfd);
 
   if ((ZipHandle = zipOpen64(szTmpZipFileName, 0)) == NULL) {
     logprint3(
         stderr, mig->fProcessLog, ws->fErrorLog,
-        "Error creating temporary zip file %s. Unable to process \"%s\"\n",
+        "Error opening temporary zip file %s. Unable to process \"%s\"\n",
         szTmpZipFileName, szZipFileName);
     unzClose(UnZipHandle);
+    remove(szTmpZipFileName);
     return TZ_ERR;
   }
 
