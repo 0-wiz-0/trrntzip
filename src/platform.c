@@ -15,14 +15,41 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+#include "platform.h"
+
+#ifdef WIN32
+#include <io.h>
+#include <stdlib.h>
+#include <string.h>
+
+int mkstemp(char *ntemplate) {
+  int i, fd = -1;
+  char *copy = strdup(ntemplate);
+
+  for (i = 0; i < 10; i++) {
+    if (!mktemp(ntemplate))
+      break;
+
+    fd = open(ntemplate, O_RDWR | C_CREAT | O_EXCL, S_IREAD | S_IWRITE);
+    if (fd >= 0 || errno != EEXIST)
+      break;
+
+    if (!copy) {
+      errno = ENOMEM;
+      break;
+    }
+    strcpy(ntemplate, copy);
+  }
+  free(copy);
+  return fd;
+}
+
+#else
+
 #include <ctype.h>
 #include <stdio.h>
-#include <unistd.h>
-
-#ifndef WIN32
-
-#include "platform.h"
 #include <termios.h>
+#include <unistd.h>
 
 char *strlwr(char *s) {
   while (*s) {
