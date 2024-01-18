@@ -47,7 +47,6 @@
 #endif
 
 #define MEGABYTE 1048576
-#define ARRAY_ELEMENTS 256
 #define ENDHEADERMAGIC (0x06054b50)
 #define COMMENT_LENGTH 22 // strlen("TORRENTZIPPED-XXXXXXXX")
 #define DIVIDER "--------------------------------------------------"
@@ -175,18 +174,11 @@ char **GetFileList(unzFile UnZipHandle, char **FileNameArray, int *piElements) {
   rc = unzGoToFirstFile(UnZipHandle);
 
   while (!rc) {
-    // Our dynamic array is no longer big enough for all
-    // the filenames, so we have to grow the array size
-    if ((iCount + 2) >= *piElements) {
-      // Grow array geometrically.
-      unsigned int iNewElements = *piElements * 2U;
-      if ((int)iNewElements < 0)
-        return NULL;
-      // May be zero if last allocation failed, so ensure minimum.
-      if (iNewElements < ARRAY_ELEMENTS)
-        iNewElements = ARRAY_ELEMENTS;
+    if (iCount + 2 > *piElements) {
+      // Our dynamic array is no longer big enough for all
+      // the filenames, so we have to grow the array size
       FileNameArray =
-          DynamicStringArrayResize(FileNameArray, piElements, iNewElements);
+          DynamicStringArrayGrow(FileNameArray, piElements);
       if (!FileNameArray)
         return NULL;
     }
@@ -681,10 +673,9 @@ static char **GetDirFileList(DIR *dirp, int *piElements) {
     return NULL;
 
   while ((direntp = readdir(dirp))) {
-    if (iCount + 2 >= *piElements) {
-      // Grow array geometrically.
+    if (iCount + 2 > *piElements) {
       FileNameArray =
-          DynamicStringArrayResize(FileNameArray, piElements, *piElements * 2);
+          DynamicStringArrayGrow(FileNameArray, piElements);
       if (!FileNameArray)
         return NULL;
     }

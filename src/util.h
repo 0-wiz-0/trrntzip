@@ -18,6 +18,8 @@
 #ifndef UTIL_DOT_H
 #define UTIL_DOT_H
 
+#define ARRAY_ELEMENTS 256
+
 int CanonicalCmp(const char *s1, const char *s2);
 int StringCompare(const void *str1, const void *str2);
 int BasenameCompare(const void *str1, const void *str2);
@@ -28,6 +30,7 @@ char **DynamicStringArrayCreate(int iElements);
 char **DynamicStringArrayDestroy(char **StringArray, int iElements);
 char **DynamicStringArrayResize(char **StringArray, int *piElements,
                                 int iNewElements);
+char **DynamicStringArrayGrow(char **FileNameArray, int *piElements);
 void DynamicStringArrayCheck(char **StringArray, int iElements);
 #ifdef NDEBUG
 #define CHECK_DYNAMIC_STRING_ARRAY(StringArray, iElements)

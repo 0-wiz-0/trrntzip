@@ -106,6 +106,12 @@ char **DynamicStringArrayResize(char **StringArray, int *piElements,
 
   CHECK_DYNAMIC_STRING_ARRAY(StringArray, *piElements);
 
+  if (iNewElements < 1) {
+    iCount = *piElements;
+    *piElements = 0;
+    return DynamicStringArrayDestroy(StringArray, iCount);
+  }
+
   for (iCount = iNewElements; iCount < *piElements; iCount++) {
     free(StringArray[iCount]);
   }
@@ -134,6 +140,14 @@ char **DynamicStringArrayResize(char **StringArray, int *piElements,
   CHECK_DYNAMIC_STRING_ARRAY(StringArray, *piElements);
 
   return (StringArray);
+}
+
+// Grow a dynamic string array geometrically.
+char **DynamicStringArrayGrow(char **FileNameArray, int *piElements) {
+  int iNewElements = *piElements < 2 ? ARRAY_ELEMENTS :
+                     *piElements < INT_MAX / 2 ? *piElements * 2 :
+                     *piElements < INT_MAX ? INT_MAX : 0;
+  return DynamicStringArrayResize(FileNameArray, piElements, iNewElements);
 }
 
 void DynamicStringArrayCheck(char **StringArray, int iElements) {
