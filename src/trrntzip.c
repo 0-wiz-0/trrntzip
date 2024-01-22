@@ -66,7 +66,7 @@
 
 WORKSPACE *AllocateWorkspace(void);
 void FreeWorkspace(WORKSPACE *ws);
-char **GetFileList(unzFile UnZipHandle, char **FileNameArray, int *piElements);
+static int GetFileList(unzFile UnZipHandle, WORKSPACE *ws);
 int CheckZipStatus(unz64_s *UnzipStream, WORKSPACE *ws);
 int ShouldFileBeRemoved(int iArray, WORKSPACE *ws);
 int ZipHasDirEntry(WORKSPACE *ws);
@@ -162,37 +162,58 @@ void FreeWorkspace(WORKSPACE *ws) {
   free(ws);
 }
 
-// Returns the file list from the zip file in original order
-char **GetFileList(unzFile UnZipHandle, char **FileNameArray, int *piElements) {
+// Stores file list from the zip file in original order in ws->FileNameArray
+static int GetFileList(unzFile UnZipHandle, WORKSPACE *ws) {
   int rc = 0;
   int iCount = 0;
 
+  unz_global_info64 GlobalInfo;
   unz_file_info64 ZipInfo;
 
-  // The contents of the input array will be over-written.
+  // The old contents of the ws->FileNameArray will be overwritten.
+
+  if (unzGetGlobalInfo64(UnZipHandle, &GlobalInfo) != UNZ_OK)
+    return TZ_ERR;
 
   rc = unzGoToFirstFile(UnZipHandle);
+  // empty zip files return UNZ_BADZIPFILE instead of UNZ_END_OF_LIST_OF_FILE
+  if (rc == UNZ_BADZIPFILE && GlobalInfo.number_entry == 0)
+    rc = UNZ_END_OF_LIST_OF_FILE;
 
-  while (!rc) {
-    if (iCount + 2 > *piElements) {
+  while (rc == UNZ_OK) {
+    if (iCount + 2 > ws->iElements) {
       // Our dynamic array is no longer big enough for all
-      // the filenames, so we have to grow the array size
-      FileNameArray =
-          DynamicStringArrayGrow(FileNameArray, piElements);
-      if (!FileNameArray)
-        return NULL;
+      // the file names, so we have to grow the array size
+      ws->FileNameArray =
+          DynamicStringArrayGrow(ws->FileNameArray, &ws->iElements);
+      if (!ws->FileNameArray)
+        return TZ_CRITICAL;
     }
 
-    unzGetCurrentFileInfo64(UnZipHandle, &ZipInfo, FileNameArray[iCount],
-                            MAX_PATH, NULL, 0, NULL, 0);
+    rc = unzGetCurrentFileInfo64(UnZipHandle, &ZipInfo,
+                                 ws->FileNameArray[iCount], MAX_PATH,
+                                 NULL, 0, NULL, 0);
+    if (rc != UNZ_OK)
+      break;
+    if (ZipInfo.size_filename >= MAX_PATH || ZipInfo.size_filename == 0)
+      break;
 
     rc = unzGoToNextFile(UnZipHandle);
     iCount++;
   }
 
-  FileNameArray[iCount][0] = 0;
+  // When previous memory allocation failures are handled gracefully,
+  // this could happen if zip file is empty and both are zero.
+  if (iCount >= ws->iElements) {
+      if (!(ws->FileNameArray =
+            DynamicStringArrayGrow(ws->FileNameArray, &ws->iElements)))
+        return TZ_CRITICAL;
+  }
 
-  return (FileNameArray);
+  ws->FileNameArray[iCount][0] = 0;
+
+  return rc == UNZ_END_OF_LIST_OF_FILE && iCount == GlobalInfo.number_entry
+         ? TZ_OK : TZ_ERR;
 }
 
 int CheckZipStatus(unz64_s *UnzipStream, WORKSPACE *ws) {
@@ -396,10 +417,16 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
   }
 
   CHECK_DYNAMIC_STRING_ARRAY(ws->FileNameArray, ws->iElements);
-  // Get the filelist from the zip file in original order
-  ws->FileNameArray =
-      GetFileList(UnZipHandle, ws->FileNameArray, &ws->iElements);
-
+  // Get the filelist from the zip file in original order in ws->FileNameArray
+  rc = GetFileList(UnZipHandle, ws);
+  if (rc != TZ_OK) {
+    logprint3(stderr, mig->fProcessLog, ws->fErrorLog,
+              rc == TZ_CRITICAL ? "Error allocating memory!\n" :
+              "Could not list contents of \"%s\". File is corrupted or "
+              "contains entries with bad names.\n", szZipFileName);
+    unzClose(UnZipHandle);
+    return rc;
+  }
   CHECK_DYNAMIC_STRING_ARRAY(ws->FileNameArray, ws->iElements);
 
   // GetFileList couldn't allocate enough memory to store the filelist
