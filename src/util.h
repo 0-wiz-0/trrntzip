@@ -30,7 +30,8 @@ char **DynamicStringArrayCreate(int iElements);
 char **DynamicStringArrayDestroy(char **StringArray, int iElements);
 char **DynamicStringArrayResize(char **StringArray, int *piElements,
                                 int iNewElements);
-char **DynamicStringArrayGrow(char **FileNameArray, int *piElements);
+char **DynamicStringArrayGrow(char **FileNameArray, int *piElements,
+                              int iMinElements);
 void DynamicStringArrayCheck(char **StringArray, int iElements);
 #ifdef NDEBUG
 #define CHECK_DYNAMIC_STRING_ARRAY(StringArray, iElements)

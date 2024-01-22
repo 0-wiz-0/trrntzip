@@ -142,11 +142,23 @@ char **DynamicStringArrayResize(char **StringArray, int *piElements,
   return (StringArray);
 }
 
-// Grow a dynamic string array geometrically.
-char **DynamicStringArrayGrow(char **FileNameArray, int *piElements) {
-  int iNewElements = *piElements < 2 ? ARRAY_ELEMENTS :
-                     *piElements < INT_MAX / 2 ? *piElements * 2 :
-                     *piElements < INT_MAX ? INT_MAX : 0;
+// Grow a dynamic string array to support at least iMinElements entries.
+// Balances number of reallocations and wasted space by using geometric
+// growth for tiny expansion requests while obeying large increments
+// exactly. Does nothing when the array is already large enough.
+char **DynamicStringArrayGrow(char **FileNameArray, int *piElements,
+                              int iMinElements) {
+  int iNewElements;
+
+  if (*piElements >= iMinElements && FileNameArray)
+    return FileNameArray;
+  else if (iMinElements - *piElements >= (*piElements + ARRAY_ELEMENTS) / 4)
+    iNewElements = iMinElements;
+  else // grow geometrically
+    iNewElements = *piElements < 2 ? ARRAY_ELEMENTS :
+                   *piElements < INT_MAX / 2 ? *piElements * 2 :
+                   *piElements < INT_MAX ? INT_MAX : 0;
+
   return DynamicStringArrayResize(FileNameArray, piElements, iNewElements);
 }
 

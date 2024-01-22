@@ -181,14 +181,10 @@ static int GetFileList(unzFile UnZipHandle, WORKSPACE *ws) {
     rc = UNZ_END_OF_LIST_OF_FILE;
 
   while (rc == UNZ_OK) {
-    if (iCount + 2 > ws->iElements) {
-      // Our dynamic array is no longer big enough for all
-      // the file names, so we have to grow the array size
-      ws->FileNameArray =
-          DynamicStringArrayGrow(ws->FileNameArray, &ws->iElements);
-      if (!ws->FileNameArray)
-        return TZ_CRITICAL;
-    }
+    // Ensure our dynamic array big enough for the next file name
+    if (!(ws->FileNameArray =
+          DynamicStringArrayGrow(ws->FileNameArray, &ws->iElements, iCount)))
+      return TZ_CRITICAL;
 
     rc = unzGetCurrentFileInfo64(UnZipHandle, &ZipInfo,
                                  ws->FileNameArray[iCount], MAX_PATH,
@@ -202,13 +198,9 @@ static int GetFileList(unzFile UnZipHandle, WORKSPACE *ws) {
     iCount++;
   }
 
-  // When previous memory allocation failures are handled gracefully,
-  // this could happen if zip file is empty and both are zero.
-  if (iCount >= ws->iElements) {
-      if (!(ws->FileNameArray =
-            DynamicStringArrayGrow(ws->FileNameArray, &ws->iElements)))
-        return TZ_CRITICAL;
-  }
+  if (!(ws->FileNameArray =
+        DynamicStringArrayGrow(ws->FileNameArray, &ws->iElements, iCount)))
+    return TZ_CRITICAL;
 
   ws->FileNameArray[iCount][0] = 0;
 
@@ -700,12 +692,10 @@ static char **GetDirFileList(DIR *dirp, int *piElements) {
     return NULL;
 
   while ((direntp = readdir(dirp))) {
-    if (iCount + 2 > *piElements) {
-      FileNameArray =
-          DynamicStringArrayGrow(FileNameArray, piElements);
-      if (!FileNameArray)
+    if (!(FileNameArray =
+          DynamicStringArrayGrow(FileNameArray, piElements, iCount + 1)))
         return NULL;
-    }
+
     strncpy(FileNameArray[iCount], direntp->d_name, MAX_PATH + 1);
     iCount++;
   }
