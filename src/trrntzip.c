@@ -162,46 +162,36 @@ void FreeWorkspace(WORKSPACE *ws) {
   free(ws);
 }
 
-// Stores file list from the zip file in original order in ws->FileNameArray
+// Stores file list from the zip file in original order in
+// ws->FileNameArray (the old contents will be overwritten).
 static int GetFileList(unzFile UnZipHandle, WORKSPACE *ws) {
-  int rc = 0;
-  int iCount = 0;
-
+  int rc = UNZ_END_OF_LIST_OF_FILE;
+  size_t iCount;
   unz_global_info64 GlobalInfo;
-  unz_file_info64 ZipInfo;
-
-  // The old contents of the ws->FileNameArray will be overwritten.
 
   if (unzGetGlobalInfo64(UnZipHandle, &GlobalInfo) != UNZ_OK)
     return TZ_ERR;
 
-  rc = unzGoToFirstFile(UnZipHandle);
-  // empty zip files return UNZ_BADZIPFILE instead of UNZ_END_OF_LIST_OF_FILE
-  if (rc == UNZ_BADZIPFILE && GlobalInfo.number_entry == 0)
-    rc = UNZ_END_OF_LIST_OF_FILE;
+  if (!(ws->FileNameArray =
+        DynamicStringArrayGrow(ws->FileNameArray, &ws->iElements,
+                               GlobalInfo.number_entry + 1)))
+    return TZ_CRITICAL;
 
-  while (rc == UNZ_OK) {
-    // Ensure our dynamic array big enough for the next file name
-    if (!(ws->FileNameArray =
-          DynamicStringArrayGrow(ws->FileNameArray, &ws->iElements, iCount)))
-      return TZ_CRITICAL;
+  if (GlobalInfo.number_entry != 0)
+    rc = unzGoToFirstFile(UnZipHandle);
+
+  for (iCount = 0;
+       rc == UNZ_OK && iCount < GlobalInfo.number_entry;
+       iCount++, rc = unzGoToNextFile(UnZipHandle)) {
+    unz_file_info64 ZipInfo;
 
     rc = unzGetCurrentFileInfo64(UnZipHandle, &ZipInfo,
                                  ws->FileNameArray[iCount], MAX_PATH,
                                  NULL, 0, NULL, 0);
-    if (rc != UNZ_OK)
+    if (rc != UNZ_OK || ZipInfo.size_filename >= MAX_PATH ||
+        ZipInfo.size_filename == 0)
       break;
-    if (ZipInfo.size_filename >= MAX_PATH || ZipInfo.size_filename == 0)
-      break;
-
-    rc = unzGoToNextFile(UnZipHandle);
-    iCount++;
   }
-
-  if (!(ws->FileNameArray =
-        DynamicStringArrayGrow(ws->FileNameArray, &ws->iElements, iCount)))
-    return TZ_CRITICAL;
-
   ws->FileNameArray[iCount][0] = 0;
 
   return rc == UNZ_END_OF_LIST_OF_FILE && iCount == GlobalInfo.number_entry
