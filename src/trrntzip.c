@@ -686,7 +686,7 @@ static char **GetDirFileList(DIR *dirp, int *piElements) {
           DynamicStringArrayGrow(FileNameArray, piElements, iCount + 1)))
         return NULL;
 
-    strncpy(FileNameArray[iCount], direntp->d_name, MAX_PATH + 1);
+    snprintf(FileNameArray[iCount], MAX_PATH + 1, "%s", direntp->d_name);
     iCount++;
   }
 
