@@ -231,28 +231,21 @@ int CheckZipStatus(unz64_s *UnzipStream, WORKSPACE *ws) {
   if (errno || ep != comment_buffer + COMMENT_LENGTH)
     return STATUS_BAD_COMMENT;
 
-  // Comment checks out so seek to 4 before it...
-  if (fseeko64(f, -(COMMENT_LENGTH + 4), SEEK_END))
-    return STATUS_ERROR;
-
-  if (ch_length > ws->iCheckBufSize) {
-    unsigned char *newbuf = realloc(ws->pszCheckBuf, ch_length + 1024);
-    if (!newbuf)
-      return STATUS_ALLOC_ERROR;
-
-    ws->pszCheckBuf = newbuf;
-    ws->iCheckBufSize = ch_length + 1024;
-  }
-
-  // Skip to start of the central header, and read it in.
+  // Comment checks out so skip to start of the central header.
   if (fseeko64(f, ch_offset, SEEK_SET))
     return STATUS_ERROR;
 
-  if ((off_t)fread(ws->pszCheckBuf, 1, ch_length, f) != ch_length)
-    return STATUS_ERROR;
+  // Read it in and calculate the crc32.
+  checksum = crc32(0L, NULL, 0);
+  while (ch_length > 0) {
+    size_t read_length =
+        ws->iCheckBufSize < ch_length ? ws->iCheckBufSize : ch_length;
+    if (fread(ws->pszCheckBuf, 1, read_length, f) != read_length)
+      return STATUS_ERROR;
 
-  // Calculate the crc32 of the central header.
-  checksum = crc32(crc32(0L, NULL, 0), ws->pszCheckBuf, ch_length);
+    checksum = crc32(checksum, ws->pszCheckBuf, read_length);
+    ch_length -= read_length;
+  }
 
   return checksum == target_checksum ? STATUS_OK : STATUS_OUT_OF_DATE;
 }
