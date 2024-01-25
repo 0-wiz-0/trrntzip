@@ -117,7 +117,7 @@ WORKSPACE *AllocateWorkspace(void) {
 
   // Allocate buffer for zip status checking.
   ws->iCheckBufSize = 10 * 1024;
-  ws->pszCheckBuf = malloc(ws->iBufSize);
+  ws->pszCheckBuf = malloc(ws->iCheckBufSize);
 
   if (ws->pszCheckBuf == NULL) {
     free(ws->pszUncompBuf);
