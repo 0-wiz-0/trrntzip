@@ -46,7 +46,6 @@
 #error "Build system must define TZ_VERSION"
 #endif
 
-#define MEGABYTE 1048576
 #define ENDHEADERMAGIC (0x06054b50)
 #define COMMENT_LENGTH 22 // strlen("TORRENTZIPPED-XXXXXXXX")
 #define DIVIDER "--------------------------------------------------"
@@ -107,7 +106,7 @@ WORKSPACE *AllocateWorkspace(void) {
     return NULL;
 
   // Allocate buffer for unpacking files into.
-  ws->iBufSize = 4 * MEGABYTE;
+  ws->iBufSize = 64 * 1024;
   ws->pszUncompBuf = malloc(ws->iBufSize);
 
   if (ws->pszUncompBuf == NULL) {
