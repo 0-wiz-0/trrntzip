@@ -36,9 +36,7 @@ typedef struct _WORKSPACE {
   char **FileNameArray;
   int iElements;
   unsigned int iBufSize;
-  unsigned char *pszUncompBuf;
-  unsigned int iCheckBufSize;
-  unsigned char *pszCheckBuf;
+  unsigned char *pszDataBuf;
   FILE *fErrorLog;
 } WORKSPACE;
 

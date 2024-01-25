@@ -105,21 +105,11 @@ WORKSPACE *AllocateWorkspace(void) {
   if (ws == NULL)
     return NULL;
 
-  // Allocate buffer for unpacking files into.
+  // Allocate buffer for status checking and unpacking files into.
   ws->iBufSize = 64 * 1024;
-  ws->pszUncompBuf = malloc(ws->iBufSize);
+  ws->pszDataBuf = malloc(ws->iBufSize);
 
-  if (ws->pszUncompBuf == NULL) {
-    free(ws);
-    return NULL;
-  }
-
-  // Allocate buffer for zip status checking.
-  ws->iCheckBufSize = 10 * 1024;
-  ws->pszCheckBuf = malloc(ws->iCheckBufSize);
-
-  if (ws->pszCheckBuf == NULL) {
-    free(ws->pszUncompBuf);
+  if (ws->pszDataBuf == NULL) {
     free(ws);
     return NULL;
   }
@@ -129,8 +119,7 @@ WORKSPACE *AllocateWorkspace(void) {
   ws->FileNameArray = DynamicStringArrayCreate(ws->iElements);
 
   if (!ws->FileNameArray) {
-    free(ws->pszUncompBuf);
-    free(ws->pszCheckBuf);
+    free(ws->pszDataBuf);
     free(ws);
     return NULL;
   }
@@ -156,8 +145,7 @@ WORKSPACE *AllocateWorkspace(void) {
 void FreeWorkspace(WORKSPACE *ws) {
   if (ws->FileNameArray)
     DynamicStringArrayDestroy(ws->FileNameArray, ws->iElements);
-  free(ws->pszCheckBuf);
-  free(ws->pszUncompBuf);
+  free(ws->pszDataBuf);
   free(ws);
 }
 
@@ -237,12 +225,11 @@ int CheckZipStatus(unz64_s *UnzipStream, WORKSPACE *ws) {
   // Read it in and calculate the crc32.
   checksum = crc32(0L, NULL, 0);
   while (ch_length > 0) {
-    size_t read_length =
-        ws->iCheckBufSize < ch_length ? ws->iCheckBufSize : ch_length;
-    if (fread(ws->pszCheckBuf, 1, read_length, f) != read_length)
+    size_t read_length = ws->iBufSize < ch_length ? ws->iBufSize : ch_length;
+    if (fread(ws->pszDataBuf, 1, read_length, f) != read_length)
       return STATUS_ERROR;
 
-    checksum = crc32(checksum, ws->pszCheckBuf, read_length);
+    checksum = crc32(checksum, ws->pszDataBuf, read_length);
     ch_length -= read_length;
   }
 
@@ -546,7 +533,7 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
 
     for (;;) {
       iBytesRead =
-          unzReadCurrentFile(UnZipHandle, ws->pszUncompBuf, ws->iBufSize);
+          unzReadCurrentFile(UnZipHandle, ws->pszDataBuf, ws->iBufSize);
 
       if (!iBytesRead) { // All bytes have been read.
         break;
@@ -561,7 +548,7 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
         break;
       }
 
-      rc = zipWriteInFileInZip(ZipHandle, ws->pszUncompBuf, iBytesRead);
+      rc = zipWriteInFileInZip(ZipHandle, ws->pszDataBuf, iBytesRead);
 
       if (rc != ZIP_OK) {
         logprint3(stderr, mig->fProcessLog, ws->fErrorLog,
