@@ -23,6 +23,7 @@
 int OpenProcessLog(const char *pszWritePath, const char *pszRelPath,
                    MIGRATE *mig);
 FILE *OpenErrorLog(char qGUILaunch);
+FILE *ErrorLog(WORKSPACE *ws);
 void logprint(FILE *stdf, FILE *f, char *format, ...);
 void logprint3(FILE *stdf, FILE *f1, FILE *f2, char *format, ...);
 

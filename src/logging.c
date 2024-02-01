@@ -188,6 +188,10 @@ FILE *OpenErrorLog(char qGUILaunch) {
   return OpenLog("error.log");
 }
 
+FILE *ErrorLog(WORKSPACE *ws) {
+  return ws->fErrorLog;
+}
+
 static FILE *OpenLog(const char *szFileName) {
   FILE *f = fopen(szFileName, "a");
 

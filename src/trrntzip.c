@@ -332,14 +332,14 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
   }
 
   if (access(szZipFileName, R_OK | W_OK)) {
-    logprint3(stderr, mig->fProcessLog, ws->fErrorLog,
+    logprint3(stderr, mig->fProcessLog, ErrorLog(ws),
               "Error opening \"%s\". %s.\n", szZipFileName, strerror(errno));
     return TZ_ERR;
   }
 
   if ((UnZipHandle = unzOpen64(szZipFileName)) == NULL) {
     logprint3(
-        stderr, mig->fProcessLog, ws->fErrorLog,
+        stderr, mig->fProcessLog, ErrorLog(ws),
         "Error opening \"%s\", zip format problem. Unable to process zip.\n",
         szZipFileName);
     return TZ_ERR;
@@ -352,14 +352,14 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
 
   switch (rc) {
   case STATUS_ERROR:
-    logprint3(stderr, mig->fProcessLog, ws->fErrorLog,
+    logprint3(stderr, mig->fProcessLog, ErrorLog(ws),
               "Unable to process \"%s\". It seems to be corrupt.\n",
               szZipFileName);
     unzClose(UnZipHandle);
     return TZ_ERR;
 
   case STATUS_ALLOC_ERROR:
-    logprint3(stderr, mig->fProcessLog, ws->fErrorLog,
+    logprint3(stderr, mig->fProcessLog, ErrorLog(ws),
               "Error allocating memory!\n");
     unzClose(UnZipHandle);
     return TZ_CRITICAL;
@@ -371,7 +371,7 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
     break;
 
   default:
-    logprint3(stderr, mig->fProcessLog, ws->fErrorLog,
+    logprint3(stderr, mig->fProcessLog, ErrorLog(ws),
               "Bad return on CheckZipStatus!\n");
     unzClose(UnZipHandle);
     return TZ_CRITICAL;
@@ -381,7 +381,7 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
   // Get the filelist from the zip file in original order in ws->FileNameArray
   rc = GetFileList(UnZipHandle, ws);
   if (rc != TZ_OK) {
-    logprint3(stderr, mig->fProcessLog, ws->fErrorLog,
+    logprint3(stderr, mig->fProcessLog, ErrorLog(ws),
               rc == TZ_CRITICAL ? "Error allocating memory!\n" :
               "Could not list contents of \"%s\". File is corrupted or "
               "contains entries with bad names.\n", szZipFileName);
@@ -392,7 +392,7 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
 
   // GetFileList couldn't allocate enough memory to store the filelist
   if (!ws->FileNameArray) {
-    logprint3(stderr, mig->fProcessLog, ws->fErrorLog,
+    logprint3(stderr, mig->fProcessLog, ErrorLog(ws),
               "Error allocating memory!\n");
     unzClose(UnZipHandle);
     return TZ_CRITICAL;
@@ -432,7 +432,7 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
   tmpfd = mkstemp(szTmpZipFileName);
   if (tmpfd < 0) {
     logprint3(
-        stderr, mig->fProcessLog, ws->fErrorLog,
+        stderr, mig->fProcessLog, ErrorLog(ws),
         "!!!! Couldn't create a unique temporary file. %s. !!!!\n",
         strerror(errno));
     unzClose(UnZipHandle);
@@ -445,7 +445,7 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
 
   if ((ZipHandle = zipOpen64(szTmpZipFileName, 0)) == NULL) {
     logprint3(
-        stderr, mig->fProcessLog, ws->fErrorLog,
+        stderr, mig->fProcessLog, ErrorLog(ws),
         "Error opening temporary zip file %s. Unable to process \"%s\"\n",
         szTmpZipFileName, szZipFileName);
     unzClose(UnZipHandle);
@@ -467,7 +467,7 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
     }
 
     if (rc != UNZ_OK) {
-      logprint3(stderr, mig->fProcessLog, ws->fErrorLog,
+      logprint3(stderr, mig->fProcessLog, ErrorLog(ws),
                 "Unable to open \"%s\" from \"%s\"\n", szFileName,
                 szZipFileName);
       error = 1;
@@ -507,7 +507,7 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
 
     // Check for duplicate files (but allow files differing only in case)
     if (iArray > 0 && !strcmp(pszZipName, ws->FileNameArray[iArray - 1])) {
-      logprint3(stderr, mig->fProcessLog, ws->fErrorLog,
+      logprint3(stderr, mig->fProcessLog, ErrorLog(ws),
                 "Zip file \"%s\" contains more than one file named \"%s\"\n",
                 szZipFileName, pszZipName);
       error = 1;
@@ -524,7 +524,7 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
                                NULL, Z_DEFLATED, Z_BEST_COMPRESSION, zip64);
 
     if (rc != ZIP_OK) {
-      logprint3(stderr, mig->fProcessLog, ws->fErrorLog,
+      logprint3(stderr, mig->fProcessLog, ErrorLog(ws),
                 "Unable to open \"%s\" in replacement zip \"%s\"\n", pszZipName,
                 szTmpZipFileName);
       error = 1;
@@ -541,7 +541,7 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
 
       if (iBytesRead < 0) // Error.
       {
-        logprint3(stderr, mig->fProcessLog, ws->fErrorLog,
+        logprint3(stderr, mig->fProcessLog, ErrorLog(ws),
                   "Error while reading \"%s\" from \"%s\"\n", szFileName,
                   szZipFileName);
         error = 1;
@@ -551,7 +551,7 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
       rc = zipWriteInFileInZip(ZipHandle, ws->pszDataBuf, iBytesRead);
 
       if (rc != ZIP_OK) {
-        logprint3(stderr, mig->fProcessLog, ws->fErrorLog,
+        logprint3(stderr, mig->fProcessLog, ErrorLog(ws),
                   "Error while adding \"%s\" to replacement zip \"%s\"\n",
                   pszZipName, szTmpZipFileName);
         error = 1;
@@ -568,11 +568,11 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
 
     if (rc != UNZ_OK) {
       if (rc == UNZ_CRCERROR)
-        logprint3(stderr, mig->fProcessLog, ws->fErrorLog,
+        logprint3(stderr, mig->fProcessLog, ErrorLog(ws),
                   "CRC error in \"%s\" in \"%s\"!\n", szFileName,
                   szZipFileName);
       else
-        logprint3(stderr, mig->fProcessLog, ws->fErrorLog,
+        logprint3(stderr, mig->fProcessLog, ErrorLog(ws),
                   "Error while closing \"%s\" in \"%s\"!\n", szFileName,
                   szZipFileName);
 
@@ -583,7 +583,7 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
     rc = zipCloseFileInZip(ZipHandle);
 
     if (rc != ZIP_OK) {
-      logprint3(stderr, mig->fProcessLog, ws->fErrorLog,
+      logprint3(stderr, mig->fProcessLog, ErrorLog(ws),
                 "Error closing \"%s\" in new zip file \"%s\"!\n", pszZipName,
                 szTmpZipFileName);
       error = 1;
@@ -626,14 +626,14 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
   if (rc == UNZ_OK) {
     const char *pErr = UpdateFile(szZipFileName, szTmpZipFileName);
     if (pErr) {
-      logprint3(stderr, mig->fProcessLog, ws->fErrorLog,
+      logprint3(stderr, mig->fProcessLog, ErrorLog(ws),
                 "!!!! Could not rename temporary file \"%s\" to \"%s\". %s\n",
                 szTmpZipFileName, szZipFileName, pErr);
       return TZ_CRITICAL;
     }
   } else {
     logprint3(
-        stderr, mig->fProcessLog, ws->fErrorLog,
+        stderr, mig->fProcessLog, ErrorLog(ws),
         "Unable to close temporary zip file \"%s\" - cannot process \"%s\"!\n",
         szTmpZipFileName, szZipFileName);
     remove(szTmpZipFileName);
@@ -736,12 +736,12 @@ static int RecursiveMigrate(const char *pszRelPath, const struct stat *pstat,
       }
     } else { // Too small to be a valid zip file.
       if (pstat->st_size)
-        logprint3(stderr, mig->fProcessLog, ws->fErrorLog,
+        logprint3(stderr, mig->fProcessLog, ErrorLog(ws),
                   "\"%s\" is too small (%d byte%s). File may be corrupt.\n",
                   pszRelPath, (int)pstat->st_size,
                   pstat->st_size == 1 ? "" : "s");
       else
-        logprint3(stderr, mig->fProcessLog, ws->fErrorLog,
+        logprint3(stderr, mig->fProcessLog, ErrorLog(ws),
                   "\"%s\" is empty. Skipping.\n", pszRelPath);
       mig->cErrorZips++;
       mig->bErrorEncountered = 1;
@@ -771,7 +771,7 @@ int RecursiveMigrateDir(const char *pszRelPath, WORKSPACE *ws) {
   // Couldn't access specified path
   dirp = opendir(pszRelPath);
   if (!dirp) {
-    logprint(stderr, ws->fErrorLog, "Could not access subdir \"%s\"! %s\n",
+    logprint(stderr, ErrorLog(ws), "Could not access subdir \"%s\"! %s\n",
              pszRelPath, strerror(errno));
     mig.bErrorEncountered = 1;
   } else {
@@ -779,7 +779,7 @@ int RecursiveMigrateDir(const char *pszRelPath, WORKSPACE *ws) {
     closedir(dirp);
 
     if (!FileNameArray) {
-      logprint(stderr, ws->fErrorLog, "Error allocating memory!\n");
+      logprint(stderr, ErrorLog(ws), "Error allocating memory!\n");
       rc = TZ_CRITICAL;
     } else {
       if (strcmp(pszRelPath, ".") == 0) {
@@ -801,7 +801,7 @@ int RecursiveMigrateDir(const char *pszRelPath, WORKSPACE *ws) {
 
         // Don't follow symlinks during recursion
         if (lstat(szTmpBuf, &istat)) {
-          logprint3(stderr, mig.fProcessLog, ws->fErrorLog,
+          logprint3(stderr, mig.fProcessLog, ErrorLog(ws),
                     "Could not stat \"%s\". %s\n", szTmpBuf, strerror(errno));
           continue;
         }
@@ -883,7 +883,7 @@ int RecursiveMigrateTop(const char *pszRelPath, WORKSPACE *ws) {
   // Follow symlinks for direct command line arguments. Process any file
   // regardless of type and name.
   if (stat(pszRelPath, &istat)) {
-    logprint(stderr, ws->fErrorLog, "Could not stat \"%s\". %s\n", pszRelPath,
+    logprint(stderr, ErrorLog(ws), "Could not stat \"%s\". %s\n", pszRelPath,
              strerror(errno));
     qErrors = 1;
     return TZ_ERR;
