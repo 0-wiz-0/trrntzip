@@ -84,10 +84,6 @@ void DisplayMigrateSummary(MIGRATE *mig);
 // This will be appended with the CRC32 of the central directory
 static const char *gszApp = {"TORRENTZIPPED-"};
 
-// Stores the path we startup in. This is so we can write logs to the right
-// place
-char *pszStartPath = NULL;
-
 // The global flags that can be set with commandline parms.
 // Setup here so as to avoid having to pass them to a lot of functions.
 char qForceReZip = 0;
@@ -149,6 +145,7 @@ void FreeWorkspace(WORKSPACE *ws) {
   if (ws->FileNameArray)
     DynamicStringArrayDestroy(ws->FileNameArray, ws->iElements);
   free(ws->pszDataBuf);
+  free(ws->pszStartPath);
   free(ws);
 }
 
@@ -712,9 +709,9 @@ static int RecursiveMigrate(const char *pszRelPath, const struct stat *pstat,
 
     if (!mig->fProcessLog) {
       if (strcmp(szRelPathBuf, ".") == 0)
-        rc = OpenProcessLog(pszStartPath, pszFileName, mig);
+        rc = OpenProcessLog(ws->pszStartPath, pszFileName, mig);
       else
-        rc = OpenProcessLog(pszStartPath, szRelPathBuf, mig);
+        rc = OpenProcessLog(ws->pszStartPath, szRelPathBuf, mig);
 
       if (rc != TZ_OK)
         return TZ_CRITICAL;
@@ -918,7 +915,6 @@ int main(int argc, char **argv) {
   int iCount = 0;
   int iOptionsFound = 0;
   int rc = 0;
-  char szStartPath[MAX_PATH + 1];
 
   for (iCount = 1; iCount < argc; iCount++) {
     if (argv[iCount][0] == '-') {
@@ -994,21 +990,23 @@ int main(int argc, char **argv) {
   }
 
 #ifdef WIN32
-  // Must get trrntzip.exe path from argv[0] and
-  // change to it. Under windows, if you drag a dir to
-  // the exe, it will use the user's "Documents and Settings"
-  // dir if we don't do this.
+  // Must get trrntzip.exe path from argv[0].
+  // Under windows, if you drag a dir to the exe, it will use the
+  // user's "Documents and Settings" dir if we don't do this.
   ptr = strrchr(argv[0], DIRSEP);
 #endif
   if (ptr) {
-    *ptr = '\0';
-    snprintf(szStartPath, sizeof(szStartPath), "%s", argv[0]);
-    pszStartPath = szStartPath;
+    ws->pszStartPath = malloc(ptr - argv[0] + 2);
+    if (ws->pszStartPath) {
+      memcpy(ws->pszStartPath, argv[0], ptr - argv[0] + 1);
+      ws->pszStartPath[ptr - argv[0] + 1] = 0;
+    }
   } else {
-    pszStartPath = get_cwd();
+    // This seems unnecessary, we could use relative paths instead.
+    ws->pszStartPath = get_cwd();
   }
 
-  if (!pszStartPath) {
+  if (!ws->pszStartPath) {
     fprintf(stderr, "Could not get startup path!\n");
     return TZ_ERR;
   }
@@ -1038,9 +1036,6 @@ int main(int argc, char **argv) {
   }
 
   FreeWorkspace(ws);
-  if (pszStartPath != szStartPath) {
-    free(pszStartPath);
-  }
 
   return rc;
 }
