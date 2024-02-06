@@ -167,28 +167,36 @@ int OpenProcessLog(const char *pszWritePath, const char *pszRelPath,
   return mig->fProcessLog ? TZ_OK : TZ_CRITICAL;
 }
 
-FILE *OpenErrorLog(char qGUILaunch) {
+static const char szErrorLogName[] = "error.log";
+
+int SetupErrorLog(WORKSPACE *ws, char qGUILaunch) {
   struct stat istat;
   int rc;
 
-  rc = stat("error.log", &istat);
+  (void)ws; // unused for now.
+
+  rc = stat(szErrorLogName, &istat);
 
   if (!rc && istat.st_size && !qGUILaunch) {
     fprintf(stderr,
-            "There is a previous 'error.log'. Are you sure you have dealt\n"
+            "There is a previous \"%s\". Are you sure you have dealt\n"
             "with the problems encountered last time this program was run?\n"
-            "(Press 'y' to continue or any other key to exit.)\n\n");
+            "(Press 'y' to continue or any other key to exit.)\n",
+            szErrorLogName);
 
     if (tolower(getch()) != 'y') {
       fprintf(stderr, "Exiting.\n");
-      return NULL;
+      return TZ_CRITICAL;
     }
   }
 
-  return OpenLog("error.log");
+  return TZ_OK;
 }
 
 FILE *ErrorLog(WORKSPACE *ws) {
+  if (!ws->fErrorLog)
+    ws->fErrorLog = OpenLog(szErrorLogName);
+
   return ws->fErrorLog;
 }
 

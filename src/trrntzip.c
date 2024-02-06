@@ -143,6 +143,9 @@ WORKSPACE *AllocateWorkspace(void) {
 }
 
 void FreeWorkspace(WORKSPACE *ws) {
+  if (ws->fErrorLog)
+    fclose(ws->fErrorLog);
+
   if (ws->FileNameArray)
     DynamicStringArrayDestroy(ws->FileNameArray, ws->iElements);
   free(ws->pszDataBuf);
@@ -865,7 +868,7 @@ void DisplayMigrateSummary(MIGRATE *mig) {
       logprint(
           stdout, mig->fProcessLog,
           "!!!! There were problems! See \"%serror.log\" for details! !!!!\n",
-          ""); // pszStartPath not used (yet) by OpenErrorLog()!
+          ""); // pszStartPath not used (yet) for error log!
       qErrors = 1;
     }
   }
@@ -915,7 +918,6 @@ int main(int argc, char **argv) {
   int iOptionsFound = 0;
   int rc = 0;
   char szStartPath[MAX_PATH + 1];
-  char szErrorLogFileName[MAX_PATH + 1];
 
   for (iCount = 1; iCount < argc; iCount++) {
     if (argv[iCount][0] == '-') {
@@ -1012,10 +1014,9 @@ int main(int argc, char **argv) {
     return TZ_ERR;
   }
 
-  ws->fErrorLog = OpenErrorLog(qGUILaunch);
+  rc = SetupErrorLog(ws, qGUILaunch);
 
-  if (ws->fErrorLog) {
-    char qLogEmpty;
+  if (rc == TZ_OK) {
     // Start process for each passed path/zip file
     for (iCount = iOptionsFound + 1; iCount < argc; iCount++) {
       rc = RecursiveMigrateTop(argv[iCount], ws);
@@ -1025,37 +1026,16 @@ int main(int argc, char **argv) {
       }
     }
 
-    // The error log may contain messages from a different run.
-    fseeko64(ws->fErrorLog, 0, SEEK_END);
-    qLogEmpty = (ftello64(ws->fErrorLog) == 0);
-
-    fclose(ws->fErrorLog);
-
-    if (qErrors) {
 #ifdef WIN32
+    if (qErrors && !qGUILaunch) {
       // This is only needed on Windows, to keep the
       // command window window from disappearing when
       // the program completes.
-      if (!qGUILaunch) {
-        fprintf(stdout, "Press any key to exit.\n");
-        fflush(stdout);
-        getch();
-      }
-#endif
-    } else if (qLogEmpty) {
-      // pszStartPath is not used (yet) by OpenErrorLog()
-      // keep the commented code (and stupid replacement) as a reminder
-      // snprintf(szErrorLogFileName, sizeof(szErrorLogFileName), "%s%c%s",
-      //         pszStartPath, DIRSEP, "error.log");
-      snprintf(szErrorLogFileName, sizeof(szErrorLogFileName), "%s",
-               "error.log");
-
-      // Removing the log file which could still be open and written to by a
-      // different process is a bad idea. Deferring error log creation until
-      // the first error message gets printed would avoid the issue since
-      // there'd be no need to ever remove the log.
-      remove(szErrorLogFileName);
+      fprintf(stdout, "Press any key to exit.\n");
+      fflush(stdout);
+      getch();
     }
+#endif
   }
 
   FreeWorkspace(ws);
