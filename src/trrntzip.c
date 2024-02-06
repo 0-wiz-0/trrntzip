@@ -914,6 +914,7 @@ int RecursiveMigrateTop(const char *pszRelPath, WORKSPACE *ws) {
 
 int main(int argc, char **argv) {
   WORKSPACE *ws;
+  char *ptr = NULL;
   int iCount = 0;
   int iOptionsFound = 0;
   int rc = 0;
@@ -998,6 +999,7 @@ int main(int argc, char **argv) {
   // the exe, it will use the user's "Documents and Settings"
   // dir if we don't do this.
   ptr = strrchr(argv[0], DIRSEP);
+#endif
   if (ptr) {
     *ptr = '\0';
     snprintf(szStartPath, sizeof(szStartPath), "%s", argv[0]);
@@ -1005,9 +1007,6 @@ int main(int argc, char **argv) {
   } else {
     pszStartPath = get_cwd();
   }
-#else
-  pszStartPath = get_cwd();
-#endif
 
   if (!pszStartPath) {
     fprintf(stderr, "Could not get startup path!\n");

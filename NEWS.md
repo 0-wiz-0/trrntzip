@@ -1,3 +1,7 @@
+# unreleased
+
+* fix a build error on windows
+
 # 1.1 [2024-01-16]
 
 * zip64 format: zip64 EOCD was missing in some cases
