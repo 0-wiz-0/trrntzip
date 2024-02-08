@@ -998,6 +998,13 @@ int main(int argc, char **argv) {
   if (argc < 2 || iOptionsFound == (argc - 1)) {
     fprintf(stderr, "trrntzip: missing path\n");
     fprintf(stderr, "Usage: trrntzip [-dfghqsv] [-eFILE] [-lDIR] [PATH/ZIP FILE]\n");
+#ifdef WIN32
+    // Prevent the command window from disappearing immediately when
+    // the user just clicks on the exe.
+    fprintf(stdout, "\nPress any key to exit.\n");
+    fflush(stdout);
+    getch();
+#endif
     return TZ_ERR;
   }
 
@@ -1073,9 +1080,8 @@ int main(int argc, char **argv) {
 
 #ifdef WIN32
     if (qErrors && !qGUILaunch) {
-      // This is only needed on Windows, to keep the
-      // command window window from disappearing when
-      // the program completes.
+      // This is only needed on Windows, to keep the command window
+      // from disappearing when the program completes.
       fprintf(stdout, "Press any key to exit.\n");
       fflush(stdout);
       getch();
