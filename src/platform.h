@@ -36,7 +36,6 @@ void cfmakeraw(struct termios *);
 
 #define DIRSEP '/'
 
-char *strlwr(char *s);
 int getch(void);
 
 #else

@@ -46,18 +46,9 @@ int mkstemp(char *ntemplate) {
 
 #else
 
-#include <ctype.h>
 #include <stdio.h>
 #include <termios.h>
 #include <unistd.h>
-
-char *strlwr(char *s) {
-  while (*s) {
-    *s = (char)tolower((unsigned char)*s);
-    ++s;
-  }
-  return s;
-}
 
 #if defined(__CYGWIN__)
 /* Workaround for Cygwin, which is missing cfmakeraw */
