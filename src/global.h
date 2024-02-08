@@ -29,6 +29,8 @@
 #define TZ_CRITICAL -2
 #define TZ_SKIPPED -3
 
+#define EXIT_CRITICAL 2
+
 #define MAX_PATH 1024
 
 typedef struct _WORKSPACE {

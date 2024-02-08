@@ -947,7 +947,7 @@ int main(int argc, char **argv) {
                 "\t-q\t: quiet mode\n"
                 "\t-s\t: prevent sub-directory recursion\n"
                 "\t-v\t: show version\n");
-        return TZ_OK;
+        return EXIT_SUCCESS;
 
       case 'd':
         // Strip subdirs from zips
@@ -987,7 +987,7 @@ int main(int argc, char **argv) {
       case 'v':
         // GUI requesting TZ version
         fprintf(stdout, "TorrentZip v%s\n", TZ_VERSION);
-        return TZ_OK;
+        return EXIT_SUCCESS;
 
       default:
         fprintf(stderr, "Unknown option : %s\n", argv[iCount]);
@@ -1005,14 +1005,14 @@ int main(int argc, char **argv) {
     fflush(stdout);
     getch();
 #endif
-    return TZ_ERR;
+    return EXIT_FAILURE;
   }
 
   ws = AllocateWorkspace();
 
   if (ws == NULL) {
     fprintf(stderr, "Error allocating memory!\n");
-    return TZ_CRITICAL;
+    return EXIT_CRITICAL;
   }
 
   if (logdir) {
@@ -1048,7 +1048,7 @@ int main(int argc, char **argv) {
   if (!ws->pszLogDir) {
     fprintf(stderr, "Could not get log directory!\n");
     FreeWorkspace(ws);
-    return TZ_ERR;
+    return EXIT_CRITICAL;
   }
 
   if (errlog) {
@@ -1056,7 +1056,7 @@ int main(int argc, char **argv) {
     if (!ws->pszErrorLogFile) {
       fprintf(stderr, "Error allocating memory!\n");
       FreeWorkspace(ws);
-      return TZ_CRITICAL;
+      return EXIT_CRITICAL;
     }
   }
   rc = SetupErrorLog(ws, qGUILaunch);
@@ -1091,5 +1091,5 @@ int main(int argc, char **argv) {
 
   FreeWorkspace(ws);
 
-  return rc;
+  return -rc; // Map TZ_... codes to EXIT_...
 }
