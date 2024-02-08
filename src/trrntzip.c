@@ -1,4 +1,5 @@
-// Copyright (C) 2005 TorrentZip Team (StatMat,shindakun,Ultrasubmarine,r3nh03k)
+// Copyright (C) 2005 - 2024 TorrentZip Team (StatMat, shindakun,
+// Ultrasubmarine, r3nh03k, goosecreature, gordonj, 0-wiz-0, A.Miller)
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -917,7 +918,7 @@ int RecursiveMigrateTop(const char *pszRelPath, WORKSPACE *ws) {
 
 int main(int argc, char **argv) {
   WORKSPACE *ws;
-  char *ptr = NULL;
+  const char *logdir = NULL, *errlog = NULL;
   int iCount = 0;
   int iOptionsFound = 0;
   int rc = 0;
@@ -925,30 +926,37 @@ int main(int argc, char **argv) {
   for (iCount = 1; iCount < argc; iCount++) {
     if (argv[iCount][0] == '-') {
       iOptionsFound++;
-      strlwr(argv[iCount]);
 
-      switch (argv[iCount][1]) {
+      switch (tolower(argv[iCount][1])) {
       case '?':
       case 'h':
-        fprintf(stdout, "TorrentZip v%s\n\n", TZ_VERSION);
-        fprintf(stdout, "Copyright (C) 2012 TorrentZip Team :\n");
-        fprintf(stdout, "StatMat, shindakun, Ultrasubmarine, r3nh03k, "
-                        "goosecreature, gordonj\n");
-        fprintf(stdout, "Homepage : https://github.com/0-wiz-0/trrntzip\n\n");
-        fprintf(stdout, "Usage: trrntzip [-dfghqsv] [PATH/ZIP FILE]\n\n");
-        fprintf(stdout, "Options:\n\n");
-        fprintf(stdout, "-h : show this help\n");
-        fprintf(stdout, "-d : strip sub-directories from zips\n");
-        fprintf(stdout, "-f : force re-zip\n");
-        fprintf(stdout, "-g : skip interactive prompts\n");
-        fprintf(stdout, "-q : quiet mode\n");
-        fprintf(stdout, "-s : prevent sub-directory recursion\n");
-        fprintf(stdout, "-v : show version\n");
+        fprintf(stdout, "%s",
+                "TorrentZip v" TZ_VERSION "\n\n"
+                "Copyright (C) 2005 - 2024 TorrentZip Team:\n"
+                "\tStatMat, shindakun, Ultrasubmarine, r3nh03k, goosecreature, "
+                "gordonj,\n\t0-wiz-0, A.Miller\n"
+                "Homepage: https://github.com/0-wiz-0/trrntzip\n\n"
+                "Usage: trrntzip [-dfghqsv] [-eFILE] [-lDIR] [PATH/ZIP FILE]\n\n"
+                "Options:\n"
+                "\t-h\t: show this help\n"
+                "\t-d\t: strip sub-directories from zips\n"
+                "\t-eFILE\t: write error log to FILE\n"
+                "\t-f\t: force re-zip\n"
+                "\t-g\t: skip interactive prompts\n"
+                "\t-lDIR\t: write log files in DIR (empty to disable)\n"
+                "\t-q\t: quiet mode\n"
+                "\t-s\t: prevent sub-directory recursion\n"
+                "\t-v\t: show version\n");
         return TZ_OK;
 
       case 'd':
         // Strip subdirs from zips
         qStripSubdirs = 1;
+        break;
+
+      case 'e':
+        // Error log file
+        errlog = &argv[iCount][2];
         break;
 
       case 'f':
@@ -959,6 +967,11 @@ int main(int argc, char **argv) {
       case 'g':
         // GUI launch process
         qGUILaunch = 1;
+        break;
+
+      case 'l':
+        // Log directory
+        logdir = &argv[iCount][2];
         break;
 
       case 'q':
@@ -984,7 +997,7 @@ int main(int argc, char **argv) {
 
   if (argc < 2 || iOptionsFound == (argc - 1)) {
     fprintf(stderr, "trrntzip: missing path\n");
-    fprintf(stderr, "Usage: trrntzip [-dfghqsv] [PATH/ZIP FILE]\n");
+    fprintf(stderr, "Usage: trrntzip [-dfghqsv] [-eFILE] [-lDIR] [PATH/ZIP FILE]\n");
     return TZ_ERR;
   }
 
@@ -995,28 +1008,50 @@ int main(int argc, char **argv) {
     return TZ_CRITICAL;
   }
 
-#ifdef WIN32
-  // Must get trrntzip.exe path from argv[0].
-  // Under windows, if you drag a dir to the exe, it will use the
-  // user's "Documents and Settings" dir if we don't do this.
-  ptr = strrchr(argv[0], DIRSEP);
-#endif
-  if (ptr) {
-    ws->pszStartPath = malloc(ptr - argv[0] + 2);
-    if (ws->pszStartPath) {
-      memcpy(ws->pszStartPath, argv[0], ptr - argv[0] + 1);
-      ws->pszStartPath[ptr - argv[0] + 1] = 0;
-    }
+  if (logdir) {
+    // Must be empty or end with DIRSEP. In case we have to add DIRSEP,
+    // strdup() with the leading option char and overprint.
+    size_t len = strlen(logdir);
+    int need_sep = len && logdir[len - 1] != DIRSEP;
+    ws->pszStartPath = strdup(logdir - need_sep);
+    if (need_sep && ws->pszStartPath)
+      sprintf(ws->pszStartPath, "%s%c", logdir, DIRSEP);
   } else {
-    // This seems unnecessary, we could use relative paths instead.
+#ifdef WIN32
+    // Must get trrntzip.exe path from argv[0].
+    // Under windows, if you drag a dir to the exe, it will use the
+    // user's "Documents and Settings" dir if we don't do this.
+    const char *ptr = strrchr(argv[0], DIRSEP);
+    if (ptr) {
+      ws->pszStartPath = malloc(ptr - argv[0] + 2);
+      if (ws->pszStartPath) {
+        memcpy(ws->pszStartPath, argv[0], ptr - argv[0] + 1);
+        ws->pszStartPath[ptr - argv[0] + 1] = 0;
+      }
+    } else {
+      // get_cwd() seems unnecessary, we could use relative paths instead.
+      ws->pszStartPath = get_cwd();
+    }
+#else
+    // We could use relative paths.
     ws->pszStartPath = get_cwd();
+#endif
   }
 
   if (!ws->pszStartPath) {
-    fprintf(stderr, "Could not get startup path!\n");
+    fprintf(stderr, "Could not get log directory!\n");
+    FreeWorkspace(ws);
     return TZ_ERR;
   }
 
+  if (errlog) {
+    ws->pszErrorLogFile = strdup(errlog);
+    if (!ws->pszErrorLogFile) {
+      fprintf(stderr, "Error allocating memory!\n");
+      FreeWorkspace(ws);
+      return TZ_CRITICAL;
+    }
+  }
   rc = SetupErrorLog(ws, qGUILaunch);
 
   if (rc == TZ_OK) {

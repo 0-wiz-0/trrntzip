@@ -1,6 +1,8 @@
 # unreleased
 
 * fix a build error on windows
+* improve log file handling
+* add -e and -l options to set (or disable) error log file and logging directory
 
 # 1.1 [2024-01-16]
 

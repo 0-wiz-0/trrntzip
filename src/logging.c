@@ -128,6 +128,9 @@ int OpenProcessLog(const char *pszWritePath, const char *pszRelPath,
   char szRelPathBuf[MAX_PATH + 1];
   char *pszDirname = NULL;
 
+  if (!*pszWritePath) // logging deliberately disabled
+    return TZ_OK;
+
   if (pszRelPath) {
     iPathLen = strlen(pszRelPath);
 
@@ -178,6 +181,9 @@ int SetupErrorLog(WORKSPACE *ws, char qGUILaunch) {
     int has_sep = !dir_len || ws->pszStartPath[dir_len - 1] == DIRSEP;
     size_t sz = dir_len + 1 - has_sep + sizeof(szErrorLogName);
 
+    if (!dir_len) // logging disabled
+      return TZ_OK;
+
     if (!(ws->pszErrorLogFile = malloc(sz))) {
       fprintf(stderr,"Error allocating memory!\n");
       return TZ_CRITICAL;
@@ -206,7 +212,7 @@ int SetupErrorLog(WORKSPACE *ws, char qGUILaunch) {
 }
 
 FILE *ErrorLog(WORKSPACE *ws) {
-  if (!ws->fErrorLog && ws->pszErrorLogFile) {
+  if (!ws->fErrorLog && ws->pszErrorLogFile && *ws->pszErrorLogFile) {
     ws->fErrorLog = OpenLog(ws->pszErrorLogFile);
     if (!ws->fErrorLog) {
       // Don't retry on failure
