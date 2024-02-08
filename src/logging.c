@@ -177,8 +177,8 @@ int SetupErrorLog(WORKSPACE *ws, char qGUILaunch) {
   if (!ws->pszErrorLogFile) {
     static const char szErrorLogName[] = "error.log";
     static const char sep[2] = {DIRSEP, 0};
-    size_t dir_len = strlen(ws->pszStartPath);
-    int has_sep = !dir_len || ws->pszStartPath[dir_len - 1] == DIRSEP;
+    size_t dir_len = strlen(ws->pszLogDir);
+    int has_sep = !dir_len || ws->pszLogDir[dir_len - 1] == DIRSEP;
     size_t sz = dir_len + 1 - has_sep + sizeof(szErrorLogName);
 
     if (!dir_len) // logging disabled
@@ -188,7 +188,7 @@ int SetupErrorLog(WORKSPACE *ws, char qGUILaunch) {
       fprintf(stderr,"Error allocating memory!\n");
       return TZ_CRITICAL;
     }
-    snprintf(ws->pszErrorLogFile, sz, "%s%s%s", ws->pszStartPath,
+    snprintf(ws->pszErrorLogFile, sz, "%s%s%s", ws->pszLogDir,
              sep + has_sep, szErrorLogName);
   }
 

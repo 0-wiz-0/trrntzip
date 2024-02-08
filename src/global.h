@@ -37,7 +37,7 @@ typedef struct _WORKSPACE {
   int iElements;
   unsigned int iBufSize;
   unsigned char *pszDataBuf;
-  char *pszStartPath;
+  char *pszLogDir;
   char *pszErrorLogFile;
   FILE *fErrorLog;
 } WORKSPACE;

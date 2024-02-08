@@ -146,7 +146,7 @@ void FreeWorkspace(WORKSPACE *ws) {
   if (ws->FileNameArray)
     DynamicStringArrayDestroy(ws->FileNameArray, ws->iElements);
   free(ws->pszDataBuf);
-  free(ws->pszStartPath);
+  free(ws->pszLogDir);
   free(ws->pszErrorLogFile);
   free(ws);
 }
@@ -711,9 +711,9 @@ static int RecursiveMigrate(const char *pszRelPath, const struct stat *pstat,
 
     if (!mig->fProcessLog) {
       if (strcmp(szRelPathBuf, ".") == 0)
-        rc = OpenProcessLog(ws->pszStartPath, pszFileName, mig);
+        rc = OpenProcessLog(ws->pszLogDir, pszFileName, mig);
       else
-        rc = OpenProcessLog(ws->pszStartPath, szRelPathBuf, mig);
+        rc = OpenProcessLog(ws->pszLogDir, szRelPathBuf, mig);
 
       if (rc != TZ_OK)
         return TZ_CRITICAL;
@@ -1013,9 +1013,9 @@ int main(int argc, char **argv) {
     // strdup() with the leading option char and overprint.
     size_t len = strlen(logdir);
     int need_sep = len && logdir[len - 1] != DIRSEP;
-    ws->pszStartPath = strdup(logdir - need_sep);
-    if (need_sep && ws->pszStartPath)
-      sprintf(ws->pszStartPath, "%s%c", logdir, DIRSEP);
+    ws->pszLogDir = strdup(logdir - need_sep);
+    if (need_sep && ws->pszLogDir)
+      sprintf(ws->pszLogDir, "%s%c", logdir, DIRSEP);
   } else {
 #ifdef WIN32
     // Must get trrntzip.exe path from argv[0].
@@ -1023,22 +1023,22 @@ int main(int argc, char **argv) {
     // user's "Documents and Settings" dir if we don't do this.
     const char *ptr = strrchr(argv[0], DIRSEP);
     if (ptr) {
-      ws->pszStartPath = malloc(ptr - argv[0] + 2);
-      if (ws->pszStartPath) {
-        memcpy(ws->pszStartPath, argv[0], ptr - argv[0] + 1);
-        ws->pszStartPath[ptr - argv[0] + 1] = 0;
+      ws->pszLogDir = malloc(ptr - argv[0] + 2);
+      if (ws->pszLogDir) {
+        memcpy(ws->pszLogDir, argv[0], ptr - argv[0] + 1);
+        ws->pszLogDir[ptr - argv[0] + 1] = 0;
       }
     } else {
       // get_cwd() seems unnecessary, we could use relative paths instead.
-      ws->pszStartPath = get_cwd();
+      ws->pszLogDir = get_cwd();
     }
 #else
     // We could use relative paths.
-    ws->pszStartPath = get_cwd();
+    ws->pszLogDir = get_cwd();
 #endif
   }
 
-  if (!ws->pszStartPath) {
+  if (!ws->pszLogDir) {
     fprintf(stderr, "Could not get log directory!\n");
     FreeWorkspace(ws);
     return TZ_ERR;
