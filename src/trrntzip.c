@@ -78,7 +78,7 @@ static int RecursiveMigrate(const char *pszRelPath, const struct stat *pstat,
                             WORKSPACE *ws, MIGRATE *mig);
 int RecursiveMigrateDir(const char *pszRelPath, WORKSPACE *ws);
 int RecursiveMigrateTop(const char *pszRelPath, WORKSPACE *ws);
-void DisplayMigrateSummary(MIGRATE *mig);
+void DisplayMigrateSummary(WORKSPACE *ws, MIGRATE *mig);
 
 // The created zip file global comment used to identify files
 // This will be appended with the CRC32 of the central directory
@@ -146,6 +146,7 @@ void FreeWorkspace(WORKSPACE *ws) {
     DynamicStringArrayDestroy(ws->FileNameArray, ws->iElements);
   free(ws->pszDataBuf);
   free(ws->pszStartPath);
+  free(ws->pszErrorLogFile);
   free(ws);
 }
 
@@ -830,14 +831,16 @@ int RecursiveMigrateDir(const char *pszRelPath, WORKSPACE *ws) {
   mig.ExecTime += difftime(time(NULL), mig.StartTime);
 
   if (rc != TZ_CRITICAL)
-    DisplayMigrateSummary(&mig);
+    DisplayMigrateSummary(ws, &mig);
+  if (rc != TZ_OK || mig.bErrorEncountered)
+    qErrors = 1;
   if (mig.fProcessLog)
     fclose(mig.fProcessLog);
 
   return rc == TZ_CRITICAL ? TZ_CRITICAL : TZ_OK;
 }
 
-void DisplayMigrateSummary(MIGRATE *mig) {
+void DisplayMigrateSummary(WORKSPACE *ws, MIGRATE *mig) {
   double ExecTime;
 
   if (mig->fProcessLog) {
@@ -862,11 +865,12 @@ void DisplayMigrateSummary(MIGRATE *mig) {
                mig->cErrorZips, mig->cErrorZips != 1 ? "s" : "");
 
     if (mig->bErrorEncountered) {
-      logprint(
-          stdout, mig->fProcessLog,
-          "!!!! There were problems! See \"%serror.log\" for details! !!!!\n",
-          ""); // pszStartPath not used (yet) for error log!
-      qErrors = 1;
+      if (ws->fErrorLog)
+        fprintf(mig->fProcessLog,
+                "!!!! There were problems! See \"%s\" for details! !!!!\n",
+                ws->pszErrorLogFile);
+      else
+        fprintf(mig->fProcessLog, "!!!! There were problems! !!!!\n");
     }
   }
 }
@@ -902,7 +906,9 @@ int RecursiveMigrateTop(const char *pszRelPath, WORKSPACE *ws) {
   mig.ExecTime += difftime(time(NULL), mig.StartTime);
 
   if (rc != TZ_CRITICAL)
-    DisplayMigrateSummary(&mig);
+    DisplayMigrateSummary(ws, &mig);
+  if (rc != TZ_OK || mig.bErrorEncountered)
+    qErrors = 1;
   if (mig.fProcessLog)
     fclose(mig.fProcessLog);
 
@@ -1017,10 +1023,17 @@ int main(int argc, char **argv) {
     // Start process for each passed path/zip file
     for (iCount = iOptionsFound + 1; iCount < argc; iCount++) {
       rc = RecursiveMigrateTop(argv[iCount], ws);
-      if (rc == TZ_CRITICAL) {
-        qErrors = 1;
+      if (rc == TZ_CRITICAL)
         break;
-      }
+    }
+
+    if (qErrors) {
+      if (ws->fErrorLog)
+        fprintf(stderr,
+                "!!!! There were problems! See \"%s\" for details! !!!!\n",
+                ws->pszErrorLogFile);
+      else
+        fprintf(stderr, "!!!! There were problems! !!!!\n");
     }
 
 #ifdef WIN32

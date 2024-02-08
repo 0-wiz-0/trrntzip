@@ -167,22 +167,34 @@ int OpenProcessLog(const char *pszWritePath, const char *pszRelPath,
   return mig->fProcessLog ? TZ_OK : TZ_CRITICAL;
 }
 
-static const char szErrorLogName[] = "error.log";
-
 int SetupErrorLog(WORKSPACE *ws, char qGUILaunch) {
   struct stat istat;
   int rc;
 
-  (void)ws; // unused for now.
+  if (!ws->pszErrorLogFile) {
+    static const char szErrorLogName[] = "error.log";
+    static const char sep[2] = {DIRSEP, 0};
+    size_t dir_len = strlen(ws->pszStartPath);
+    int has_sep = !dir_len || ws->pszStartPath[dir_len - 1] == DIRSEP;
+    size_t sz = dir_len + 1 - has_sep + sizeof(szErrorLogName);
 
-  rc = stat(szErrorLogName, &istat);
+    if (!(ws->pszErrorLogFile = malloc(sz))) {
+      fprintf(stderr,"Error allocating memory!\n");
+      return TZ_CRITICAL;
+    }
+    snprintf(ws->pszErrorLogFile, sz, "%s%s%s", ws->pszStartPath,
+             sep + has_sep, szErrorLogName);
+  }
+
+  rc = stat(ws->pszErrorLogFile, &istat);
 
   if (!rc && istat.st_size && !qGUILaunch) {
     fprintf(stderr,
-            "There is a previous \"%s\". Are you sure you have dealt\n"
-            "with the problems encountered last time this program was run?\n"
+            "There is a previous \"%s\".\n"
+            "Are you sure you have dealt with the problems encountered\n"
+            "last time this program was run?\n"
             "(Press 'y' to continue or any other key to exit.)\n",
-            szErrorLogName);
+            ws->pszErrorLogFile);
 
     if (tolower(getch()) != 'y') {
       fprintf(stderr, "Exiting.\n");
@@ -194,8 +206,14 @@ int SetupErrorLog(WORKSPACE *ws, char qGUILaunch) {
 }
 
 FILE *ErrorLog(WORKSPACE *ws) {
-  if (!ws->fErrorLog)
-    ws->fErrorLog = OpenLog(szErrorLogName);
+  if (!ws->fErrorLog && ws->pszErrorLogFile) {
+    ws->fErrorLog = OpenLog(ws->pszErrorLogFile);
+    if (!ws->fErrorLog) {
+      // Don't retry on failure
+      free(ws->pszErrorLogFile);
+      ws->pszErrorLogFile = NULL;
+    }
+  }
 
   return ws->fErrorLog;
 }
