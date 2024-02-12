@@ -5,8 +5,8 @@
 
    Keep in sync when updating the MiniZip files!
 
-   See copyright notes in the header of contrib/unzip.c and contrib/zip.c
-   For more info read contrib/MiniZip_info.txt
+   See copyright notes in the header of minizip/unzip.c and minizip/zip.c
+   For more info read minizip/MiniZip_info.txt
    
    ----------------------------------------------------------
     Condition of use and distribution are the same than zlib :
@@ -32,8 +32,8 @@
 #ifndef minizip_h_
 #define minizip_h_
 
-#include "contrib/unzip.h"
-#include "contrib/zip.h"
+#include "minizip/unzip.h"
+#include "minizip/zip.h"
 
 /* ---------------------------------------------------------- */
 

@@ -18,11 +18,11 @@
 #ifndef GLOBAL_DOT_H
 #define GLOBAL_DOT_H
 
-#include "platform.h"
+#include "minizip/zip.h"
 
 #include <stdio.h>
 
-#include "zip.h"
+#include "platform.h"
 
 #define TZ_OK 0
 #define TZ_ERR -1
