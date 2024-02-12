@@ -20,6 +20,8 @@
 #include "../config.h"
 #endif
 
+#include "minizip.h"
+
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
@@ -35,9 +37,6 @@
 
 #define NDEBUG
 #include <assert.h>
-
-#include "unzip.h"
-#include "zip.h"
 
 #include "global.h"
 #include "logging.h"
@@ -601,7 +600,7 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
   if (error) {
     fprintf(mig->fProcessLog, "Not done\n");
     unzClose(UnZipHandle);
-    zipClose(ZipHandle, NULL, zip64);
+    zipClose(ZipHandle, NULL);
     remove(szTmpZipFileName);
     return TZ_ERR;
   }
@@ -623,7 +622,7 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
   // Set the global file comment, so that we know to skip this file in future
   snprintf(szTmpBuf, sizeof(szTmpBuf), "%s%08lX", gszApp, crc);
 
-  rc = zipClose(ZipHandle, szTmpBuf, zip64);
+  rc = zipClose(ZipHandle, szTmpBuf);
 
   if (rc == UNZ_OK) {
     const char *pErr = UpdateFile(szZipFileName, szTmpZipFileName);

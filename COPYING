@@ -13,6 +13,7 @@ with the program in the file "GPL2.txt".
 
 
 Moreover, this software includes (modified) code from minizip, which
-is distributed as part of zlib; in particular, the files in "src/contrib/".
+is distributed as part of zlib; in particular "src/minizip.h" and the
+files in "src/contrib/".
 The license for this code is the same as zlib. The full text of this
 license is included in at the end of "src/contrib/MiniZip64_info.txt".
