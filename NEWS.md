@@ -1,3 +1,12 @@
+# unreleased
+
+* fix a build error on windows
+* improve log file handling
+* add -e and -l options to set (or disable) error log file and logging directory
+* revert zip64 format changes from last release
+* update included source for minizip to version from zlib-1.3.1
+* various fixes and code cleanup
+
 # 1.1 [2024-01-16]
 
 * zip64 format: zip64 EOCD was missing in some cases
@@ -11,7 +20,7 @@
 * various other fixes
 
 Thanks to our new contributor:
-* @miller-alex
+* Alexander Miller
 
 # 1.0.0 [2022-06-18]
 

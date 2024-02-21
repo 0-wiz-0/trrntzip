@@ -11,9 +11,9 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -128,6 +128,9 @@ int OpenProcessLog(const char *pszWritePath, const char *pszRelPath,
   char szRelPathBuf[MAX_PATH + 1];
   char *pszDirname = NULL;
 
+  if (!*pszWritePath) // logging deliberately disabled
+    return TZ_OK;
+
   if (pszRelPath) {
     iPathLen = strlen(pszRelPath);
 
@@ -167,25 +170,58 @@ int OpenProcessLog(const char *pszWritePath, const char *pszRelPath,
   return mig->fProcessLog ? TZ_OK : TZ_CRITICAL;
 }
 
-FILE *OpenErrorLog(char qGUILaunch) {
+int SetupErrorLog(WORKSPACE *ws, char qGUILaunch) {
   struct stat istat;
   int rc;
 
-  rc = stat("error.log", &istat);
+  if (!ws->pszErrorLogFile) {
+    static const char szErrorLogName[] = "error.log";
+    static const char sep[2] = {DIRSEP, 0};
+    size_t dir_len = strlen(ws->pszLogDir);
+    int has_sep = !dir_len || ws->pszLogDir[dir_len - 1] == DIRSEP;
+    size_t sz = dir_len + 1 - has_sep + sizeof(szErrorLogName);
+
+    if (!dir_len) // logging disabled
+      return TZ_OK;
+
+    if (!(ws->pszErrorLogFile = malloc(sz))) {
+      fprintf(stderr,"Error allocating memory!\n");
+      return TZ_CRITICAL;
+    }
+    snprintf(ws->pszErrorLogFile, sz, "%s%s%s", ws->pszLogDir,
+             sep + has_sep, szErrorLogName);
+  }
+
+  rc = stat(ws->pszErrorLogFile, &istat);
 
   if (!rc && istat.st_size && !qGUILaunch) {
     fprintf(stderr,
-            "There is a previous 'error.log'. Are you sure you have dealt\n"
-            "with the problems encountered last time this program was run?\n"
-            "(Press 'y' to continue or any other key to exit.)\n\n");
+            "There is a previous \"%s\".\n"
+            "Are you sure you have dealt with the problems encountered\n"
+            "last time this program was run?\n"
+            "(Press 'y' to continue or any other key to exit.)\n",
+            ws->pszErrorLogFile);
 
     if (tolower(getch()) != 'y') {
       fprintf(stderr, "Exiting.\n");
-      return NULL;
+      return TZ_CRITICAL;
     }
   }
 
-  return OpenLog("error.log");
+  return TZ_OK;
+}
+
+FILE *ErrorLog(WORKSPACE *ws) {
+  if (!ws->fErrorLog && ws->pszErrorLogFile && *ws->pszErrorLogFile) {
+    ws->fErrorLog = OpenLog(ws->pszErrorLogFile);
+    if (!ws->fErrorLog) {
+      // Don't retry on failure
+      free(ws->pszErrorLogFile);
+      ws->pszErrorLogFile = NULL;
+    }
+  }
+
+  return ws->fErrorLog;
 }
 
 static FILE *OpenLog(const char *szFileName) {

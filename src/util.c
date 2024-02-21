@@ -11,13 +11,16 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #define NDEBUG
@@ -48,15 +51,13 @@ int BasenameCompare(const void *str1, const void *str2) {
   return CanonicalCmp(b1 ? b1 + 1 : p1, b2 ? b2 + 1 : p2);
 }
 
-int EndsWithCaseInsensitive(const char *str1, const char *str2) {
-  int n1, n2;
-  n1 = strlen(str1);
-  n2 = strlen(str2);
-  if (n2 < n1) {
-    return strcasecmp(str1 + n1 - n2, str2);
-  } else {
-    return strcasecmp(str1, str2 + n2 - n1);
-  }
+int EndsWithCaseInsensitive(const char *str, const char *tail) {
+  int n1 = strlen(str), n2 = strlen(tail);
+
+  if (n1 < n2)
+    return 0;
+  else
+    return !strcasecmp(str + n1 - n2, tail);
 }
 
 // Create a dynamic string array
@@ -106,6 +107,12 @@ char **DynamicStringArrayResize(char **StringArray, int *piElements,
 
   CHECK_DYNAMIC_STRING_ARRAY(StringArray, *piElements);
 
+  if (iNewElements < 1) {
+    iCount = *piElements;
+    *piElements = 0;
+    return DynamicStringArrayDestroy(StringArray, iCount);
+  }
+
   for (iCount = iNewElements; iCount < *piElements; iCount++) {
     free(StringArray[iCount]);
   }
@@ -134,6 +141,26 @@ char **DynamicStringArrayResize(char **StringArray, int *piElements,
   CHECK_DYNAMIC_STRING_ARRAY(StringArray, *piElements);
 
   return (StringArray);
+}
+
+// Grow a dynamic string array to support at least iMinElements entries.
+// Balances number of reallocations and wasted space by using geometric
+// growth for tiny expansion requests while obeying large increments
+// exactly. Does nothing when the array is already large enough.
+char **DynamicStringArrayGrow(char **FileNameArray, int *piElements,
+                              int iMinElements) {
+  int iNewElements;
+
+  if (*piElements >= iMinElements && FileNameArray)
+    return FileNameArray;
+  else if (iMinElements - *piElements >= (*piElements + ARRAY_ELEMENTS) / 4)
+    iNewElements = iMinElements;
+  else // grow geometrically
+    iNewElements = *piElements < 2 ? ARRAY_ELEMENTS :
+                   *piElements < INT_MAX / 2 ? *piElements * 2 :
+                   *piElements < INT_MAX ? INT_MAX : 0;
+
+  return DynamicStringArrayResize(FileNameArray, piElements, iNewElements);
 }
 
 void DynamicStringArrayCheck(char **StringArray, int iElements) {
@@ -179,4 +206,43 @@ char *get_cwd(void) {
   }
 
   return pszCWD;
+}
+
+// Replaces file dest with tmpfile.
+// Returns NULL on success or an error message.
+const char *UpdateFile(const char *dest, const char *tmpfile) {
+#ifdef WIN32
+  // On WIN32, rename() fails if the destination exists. So we have to remove
+  // the destination first.
+  if (remove(dest)) {
+    if (remove(tmpfile))
+      return "Unable to remove either destination or temporary file. "
+             "Please replace the file manually.";
+    else
+      return "Unable to remove destination for replacement (temporary "
+             "file removed)."
+  }
+  if (rename(tmpfile, dest))
+    return "The original file has already been deleted, so you must rename "
+           "this file manually.";
+
+#else // !WIN32, assume POSIX semantics
+
+  // Try to preserve permissions but ignore errors
+  struct stat st;
+  if (!stat(dest, &st))
+    chmod(tmpfile, st.st_mode & ~S_IFMT);
+
+  // On a POSIX system, rename() atomically replaces the destination if
+  // it exists.
+  if (rename(tmpfile, dest)) {
+    if (remove(tmpfile))
+      return "Also could not remove temporary file. "
+             "Please replace the file manually.";
+    else
+      return strerror(errno);
+  }
+#endif
+
+  return NULL; // success
 }

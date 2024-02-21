@@ -11,26 +11,44 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-#include <ctype.h>
-#include <stdio.h>
-#include <unistd.h>
-
-#ifndef WIN32
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 #include "platform.h"
-#include <termios.h>
 
-char *strlwr(char *s) {
-  while (*s) {
-    *s = (char)tolower((unsigned char)*s);
-    ++s;
+#ifdef WIN32
+#include <io.h>
+#include <stdlib.h>
+#include <string.h>
+
+int mkstemp(char *ntemplate) {
+  int i, fd = -1;
+  char *copy = strdup(ntemplate);
+
+  for (i = 0; i < 10; i++) {
+    if (!mktemp(ntemplate))
+      break;
+
+    fd = open(ntemplate, O_RDWR | C_CREAT | O_EXCL, S_IREAD | S_IWRITE);
+    if (fd >= 0 || errno != EEXIST)
+      break;
+
+    if (!copy) {
+      errno = ENOMEM;
+      break;
+    }
+    strcpy(ntemplate, copy);
   }
-  return s;
+  free(copy);
+  return fd;
 }
+
+#else
+
+#include <stdio.h>
+#include <termios.h>
+#include <unistd.h>
 
 #if defined(__CYGWIN__)
 /* Workaround for Cygwin, which is missing cfmakeraw */

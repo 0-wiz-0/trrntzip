@@ -11,23 +11,25 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 #ifndef GLOBAL_DOT_H
 #define GLOBAL_DOT_H
 
-#include "platform.h"
+#include "minizip/zip.h"
 
 #include <stdio.h>
 
-#include "zip.h"
+#include "platform.h"
 
 #define TZ_OK 0
 #define TZ_ERR -1
 #define TZ_CRITICAL -2
 #define TZ_SKIPPED -3
+
+#define EXIT_CRITICAL 2
 
 #define MAX_PATH 1024
 
@@ -36,9 +38,9 @@ typedef struct _WORKSPACE {
   char **FileNameArray;
   int iElements;
   unsigned int iBufSize;
-  unsigned char *pszUncompBuf;
-  unsigned int iCheckBufSize;
-  unsigned char *pszCheckBuf;
+  unsigned char *pszDataBuf;
+  char *pszLogDir;
+  char *pszErrorLogFile;
   FILE *fErrorLog;
 } WORKSPACE;
 
