@@ -1,4 +1,4 @@
-# unreleased
+# 1.2 [2024-02-22]
 
 * fix a build error on windows
 * improve log file handling
