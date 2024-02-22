@@ -160,22 +160,20 @@ static int GetFileList(unzFile UnZipHandle, WORKSPACE *ws) {
   if (unzGetGlobalInfo64(UnZipHandle, &GlobalInfo) != UNZ_OK)
     return TZ_ERR;
 
-  if (!(ws->FileNameArray =
-        DynamicStringArrayGrow(ws->FileNameArray, &ws->iElements,
-                               GlobalInfo.number_entry + 1)))
+  if (!(ws->FileNameArray = DynamicStringArrayGrow(
+            ws->FileNameArray, &ws->iElements, GlobalInfo.number_entry + 1)))
     return TZ_CRITICAL;
 
   if (GlobalInfo.number_entry != 0)
     rc = unzGoToFirstFile(UnZipHandle);
 
-  for (iCount = 0;
-       rc == UNZ_OK && iCount < GlobalInfo.number_entry;
+  for (iCount = 0; rc == UNZ_OK && iCount < GlobalInfo.number_entry;
        iCount++, rc = unzGoToNextFile(UnZipHandle)) {
     unz_file_info64 ZipInfo;
 
     rc = unzGetCurrentFileInfo64(UnZipHandle, &ZipInfo,
-                                 ws->FileNameArray[iCount], MAX_PATH,
-                                 NULL, 0, NULL, 0);
+                                 ws->FileNameArray[iCount], MAX_PATH, NULL, 0,
+                                 NULL, 0);
     if (rc != UNZ_OK || ZipInfo.size_filename >= MAX_PATH ||
         ZipInfo.size_filename == 0)
       break;
@@ -183,7 +181,8 @@ static int GetFileList(unzFile UnZipHandle, WORKSPACE *ws) {
   ws->FileNameArray[iCount][0] = 0;
 
   return rc == UNZ_END_OF_LIST_OF_FILE && iCount == GlobalInfo.number_entry
-         ? TZ_OK : TZ_ERR;
+             ? TZ_OK
+             : TZ_ERR;
 }
 
 int CheckZipStatus(unz64_s *UnzipStream, WORKSPACE *ws) {
@@ -383,9 +382,11 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
   rc = GetFileList(UnZipHandle, ws);
   if (rc != TZ_OK) {
     logprint3(stderr, mig->fProcessLog, ErrorLog(ws),
-              rc == TZ_CRITICAL ? "Error allocating memory!\n" :
-              "Could not list contents of \"%s\". File is corrupted or "
-              "contains entries with bad names.\n", szZipFileName);
+              rc == TZ_CRITICAL
+                  ? "Error allocating memory!\n"
+                  : "Could not list contents of \"%s\". File is corrupted or "
+                    "contains entries with bad names.\n",
+              szZipFileName);
     unzClose(UnZipHandle);
     return rc;
   }
@@ -432,10 +433,9 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
 
   tmpfd = mkstemp(szTmpZipFileName);
   if (tmpfd < 0) {
-    logprint3(
-        stderr, mig->fProcessLog, ErrorLog(ws),
-        "!!!! Couldn't create a unique temporary file. %s. !!!!\n",
-        strerror(errno));
+    logprint3(stderr, mig->fProcessLog, ErrorLog(ws),
+              "!!!! Couldn't create a unique temporary file. %s. !!!!\n",
+              strerror(errno));
     unzClose(UnZipHandle);
     return TZ_CRITICAL;
   }
@@ -445,10 +445,9 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
   close(tmpfd);
 
   if ((ZipHandle = zipOpen64(szTmpZipFileName, 0)) == NULL) {
-    logprint3(
-        stderr, mig->fProcessLog, ErrorLog(ws),
-        "Error opening temporary zip file %s. Unable to process \"%s\"\n",
-        szTmpZipFileName, szZipFileName);
+    logprint3(stderr, mig->fProcessLog, ErrorLog(ws),
+              "Error opening temporary zip file %s. Unable to process \"%s\"\n",
+              szTmpZipFileName, szZipFileName);
     unzClose(UnZipHandle);
     remove(szTmpZipFileName);
     return TZ_ERR;
@@ -663,8 +662,8 @@ static char **GetDirFileList(DIR *dirp, int *piElements) {
 
   while ((direntp = readdir(dirp))) {
     if (!(FileNameArray =
-          DynamicStringArrayGrow(FileNameArray, piElements, iCount + 1)))
-        return NULL;
+              DynamicStringArrayGrow(FileNameArray, piElements, iCount + 1)))
+      return NULL;
 
     snprintf(FileNameArray[iCount], MAX_PATH + 1, "%s", direntp->d_name);
     iCount++;
@@ -926,26 +925,27 @@ int main(int argc, char **argv) {
     if (argv[iCount][0] == '-') {
       iOptionsFound++;
 
-      switch (tolower(argv[iCount][1])) {
+      switch (tolower((unsigned char)argv[iCount][1])) {
       case '?':
       case 'h':
-        fprintf(stdout, "%s",
-                "TorrentZip v" TZ_VERSION "\n\n"
-                "Copyright (C) 2005 - 2024 TorrentZip Team:\n"
-                "\tStatMat, shindakun, Ultrasubmarine, r3nh03k, goosecreature, "
-                "gordonj,\n\t0-wiz-0, A.Miller\n"
-                "Homepage: https://github.com/0-wiz-0/trrntzip\n\n"
-                "Usage: trrntzip [-dfghqsv] [-eFILE] [-lDIR] [PATH/ZIP FILE]\n\n"
-                "Options:\n"
-                "\t-h\t: show this help\n"
-                "\t-d\t: strip sub-directories from zips\n"
-                "\t-eFILE\t: write error log to FILE\n"
-                "\t-f\t: force re-zip\n"
-                "\t-g\t: skip interactive prompts\n"
-                "\t-lDIR\t: write log files in DIR (empty to disable)\n"
-                "\t-q\t: quiet mode\n"
-                "\t-s\t: prevent sub-directory recursion\n"
-                "\t-v\t: show version\n");
+        fprintf(
+            stdout, "%s",
+            "TorrentZip v" TZ_VERSION "\n\n"
+            "Copyright (C) 2005 - 2024 TorrentZip Team:\n"
+            "\tStatMat, shindakun, Ultrasubmarine, r3nh03k, goosecreature, "
+            "gordonj,\n\t0-wiz-0, A.Miller\n"
+            "Homepage: https://github.com/0-wiz-0/trrntzip\n\n"
+            "Usage: trrntzip [-dfghqsv] [-eFILE] [-lDIR] [PATH/ZIP FILE]\n\n"
+            "Options:\n"
+            "\t-h\t: show this help\n"
+            "\t-d\t: strip sub-directories from zips\n"
+            "\t-eFILE\t: write error log to FILE\n"
+            "\t-f\t: force re-zip\n"
+            "\t-g\t: skip interactive prompts\n"
+            "\t-lDIR\t: write log files in DIR (empty to disable)\n"
+            "\t-q\t: quiet mode\n"
+            "\t-s\t: prevent sub-directory recursion\n"
+            "\t-v\t: show version\n");
         return EXIT_SUCCESS;
 
       case 'd':
@@ -996,7 +996,8 @@ int main(int argc, char **argv) {
 
   if (argc < 2 || iOptionsFound == (argc - 1)) {
     fprintf(stderr, "trrntzip: missing path\n");
-    fprintf(stderr, "Usage: trrntzip [-dfghqsv] [-eFILE] [-lDIR] [PATH/ZIP FILE]\n");
+    fprintf(stderr,
+            "Usage: trrntzip [-dfghqsv] [-eFILE] [-lDIR] [PATH/ZIP FILE]\n");
 #ifdef WIN32
     // Prevent the command window from disappearing immediately when
     // the user just clicks on the exe.

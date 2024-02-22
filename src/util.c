@@ -156,9 +156,10 @@ char **DynamicStringArrayGrow(char **FileNameArray, int *piElements,
   else if (iMinElements - *piElements >= (*piElements + ARRAY_ELEMENTS) / 4)
     iNewElements = iMinElements;
   else // grow geometrically
-    iNewElements = *piElements < 2 ? ARRAY_ELEMENTS :
-                   *piElements < INT_MAX / 2 ? *piElements * 2 :
-                   *piElements < INT_MAX ? INT_MAX : 0;
+    iNewElements = *piElements < 2             ? ARRAY_ELEMENTS
+                   : *piElements < INT_MAX / 2 ? *piElements * 2
+                   : *piElements < INT_MAX     ? INT_MAX
+                                               : 0;
 
   return DynamicStringArrayResize(FileNameArray, piElements, iNewElements);
 }

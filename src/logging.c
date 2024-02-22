@@ -185,11 +185,11 @@ int SetupErrorLog(WORKSPACE *ws, char qGUILaunch) {
       return TZ_OK;
 
     if (!(ws->pszErrorLogFile = malloc(sz))) {
-      fprintf(stderr,"Error allocating memory!\n");
+      fprintf(stderr, "Error allocating memory!\n");
       return TZ_CRITICAL;
     }
-    snprintf(ws->pszErrorLogFile, sz, "%s%s%s", ws->pszLogDir,
-             sep + has_sep, szErrorLogName);
+    snprintf(ws->pszErrorLogFile, sz, "%s%s%s", ws->pszLogDir, sep + has_sep,
+             szErrorLogName);
   }
 
   rc = stat(ws->pszErrorLogFile, &istat);
