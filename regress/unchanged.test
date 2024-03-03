@@ -1,0 +1,7 @@
+description run on already torrentzipped file
+return 0
+arguments -l small.zip
+file small.zip small.tzip
+stdout
+Skipping, already TorrentZipped - small.zip
+end-of-inline-data
