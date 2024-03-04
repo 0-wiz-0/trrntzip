@@ -379,16 +379,20 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
 
   CHECK_DYNAMIC_STRING_ARRAY(ws->FileNameArray, ws->iElements);
   // Get the filelist from the zip file in original order in ws->FileNameArray
-  rc = GetFileList(UnZipHandle, ws);
-  if (rc != TZ_OK) {
+  switch (GetFileList(UnZipHandle, ws)) {
+  case TZ_OK:
+    break;
+  case TZ_CRITICAL:
     logprint3(stderr, mig->fProcessLog, ErrorLog(ws),
-              rc == TZ_CRITICAL
-                  ? "Error allocating memory!\n"
-                  : "Could not list contents of \"%s\". File is corrupted or "
-                    "contains entries with bad names.\n",
-              szZipFileName);
+              "Error allocating memory!\n");
     unzClose(UnZipHandle);
-    return rc;
+    return TZ_CRITICAL;
+  default:
+    logprint3(stderr, mig->fProcessLog, ErrorLog(ws),
+              "Could not list contents of \"%s\". File is corrupted or "
+              "contains entries with bad names.\n", szZipFileName);
+    unzClose(UnZipHandle);
+    return TZ_ERR;
   }
   CHECK_DYNAMIC_STRING_ARRAY(ws->FileNameArray, ws->iElements);
 
