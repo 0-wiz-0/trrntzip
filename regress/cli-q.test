@@ -1,0 +1,4 @@
+description test -q: quiet mode
+return 0
+arguments -q -l small.zip
+file small.zip small.zip small.tzip
