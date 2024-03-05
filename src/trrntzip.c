@@ -601,7 +601,7 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
 
   // If there was an error above then clean up and return.
   if (error) {
-    fprintf(mig->fProcessLog, "Not done\n");
+    logprint(stdout, mig->fProcessLog, "Not done\n");
     unzClose(UnZipHandle);
     zipClose(ZipHandle, NULL);
     remove(szTmpZipFileName);
@@ -869,11 +869,11 @@ void DisplayMigrateSummary(WORKSPACE *ws, MIGRATE *mig) {
 
     if (mig->bErrorEncountered) {
       if (ws->fErrorLog)
-        fprintf(mig->fProcessLog,
-                "!!!! There were problems! See \"%s\" for details! !!!!\n",
-                ws->pszErrorLogFile);
+        logprint(stdout, mig->fProcessLog,
+                 "!!!! There were problems! See \"%s\" for details! !!!!\n",
+                 ws->pszErrorLogFile);
       else
-        fprintf(mig->fProcessLog, "!!!! There were problems! !!!!\n");
+        logprint(stdout, mig->fProcessLog, "!!!! There were problems! !!!!\n");
     }
   }
 }

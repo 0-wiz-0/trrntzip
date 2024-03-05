@@ -6,7 +6,9 @@ stdout
 Rezipping - dupe.zip
 --------------------------------------------------
 Adding - abc (4 bytes)...Done
+Not done
 end-of-inline-data
 stderr
 Zip file "dupe.zip" contains more than one file named "abc"
+!!!! There were problems! !!!!
 end-of-inline-data
