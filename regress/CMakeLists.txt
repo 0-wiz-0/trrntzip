@@ -1,7 +1,6 @@
 set(XFAIL_TESTS
   cli-q.test
   sort-dupes.test
-  stealth-modified.test
 )
 
 if(RUN_REGRESS)

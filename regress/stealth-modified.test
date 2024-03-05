@@ -1,7 +1,7 @@
 description test that trrntzip does not recognize some kind of changes
 return 0
 arguments -l small.zip
-file small.zip small-modified.tzip small.tzip
+file small.zip small-modified.tzip small-modified.tzip
 stdout
 Skipping, already TorrentZipped - small.zip
 end-of-inline-data
