@@ -1,0 +1,12 @@
+description test -d: strip directories from names
+return 0
+arguments -d -l directories.zip
+file directories.zip directories.tzip no-directories.tzip
+stdout
+Rezipping - directories.zip
+--------------------------------------------------
+Adding - x (2 bytes, was: b/x)...Done
+Adding - y (2 bytes, was: a/y)...Done
+--------------------------------------------------
+Rezipped 2 compressed files totaling 4 bytes.
+end-of-inline-data
