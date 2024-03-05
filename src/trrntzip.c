@@ -939,7 +939,7 @@ int main(int argc, char **argv) {
             "\tStatMat, shindakun, Ultrasubmarine, r3nh03k, goosecreature, "
             "gordonj,\n\t0-wiz-0, A.Miller\n"
             "Homepage: https://github.com/0-wiz-0/trrntzip\n\n"
-            "Usage: trrntzip [-dfghqsv] [-eFILE] [-lDIR] [PATH/ZIP FILE]\n\n"
+            "Usage: trrntzip [-dfghqsv] [-eFILE] [-l[DIR]] [PATH/ZIP FILE]\n\n"
             "Options:\n"
             "\t-h\t: show this help\n"
             "\t-d\t: strip sub-directories from zips\n"
