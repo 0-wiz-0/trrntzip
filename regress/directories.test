@@ -1,0 +1,14 @@
+description torrentzip a zip archive with directories
+return 0
+arguments -l directories.zip
+file directories.zip directories.zip directories.tzip
+stdout
+Rezipping - directories.zip
+--------------------------------------------------
+Directory a/ Removed
+Adding - a/y (2 bytes)...Done
+Directory b/ Removed
+Adding - b/x (2 bytes)...Done
+--------------------------------------------------
+Rezipped 2 compressed files totaling 4 bytes.
+end-of-inline-data
