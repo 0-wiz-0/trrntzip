@@ -1,15 +1,17 @@
 description test -e: write error log to file
 return 0
-arguments -eerror.log.txt -l dupe.zip
+arguments -eerror.log -l dupe.zip
 file dupe.zip dupe.zip dupe.zip
 stdout
 Rezipping - dupe.zip
 --------------------------------------------------
 Adding - abc (4 bytes)...Done
+Not done
 end-of-inline-data
 stderr
 Zip file "dupe.zip" contains more than one file named "abc"
+!!!! There were problems! See "error.log" for details! !!!!
 end-of-inline-data
-file error.log.txt {} <inline>
-[2024/03/05 - 21:41:30] Zip file "dupe.zip" contains more than one file named "abc"
+file error.log {} <inline.log>
+[timestamp] Zip file "dupe.zip" contains more than one file named "abc"
 end-of-inline-data

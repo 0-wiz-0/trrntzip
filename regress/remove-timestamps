@@ -1,0 +1,12 @@
+#!/usr/bin/env python3
+
+import fileinput
+import re
+
+timestamp_re = re.compile(r'\[\d\d\d\d/\d\d/\d\d - \d\d:\d\d:\d\d\]')
+
+for line in fileinput.input():
+    line = line.rstrip()
+    line = re.sub(timestamp_re, '[timestamp]', line)
+    print(line)
+
