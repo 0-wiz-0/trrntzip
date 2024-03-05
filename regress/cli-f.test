@@ -1,0 +1,11 @@
+description test -f: force re-torrentzip
+return 0
+arguments -f -l small.zip
+file small.zip small-modified.tzip small.tzip
+stdout
+Rezipping - small.zip
+--------------------------------------------------
+Adding - test.txt (31 bytes)...Done
+--------------------------------------------------
+Rezipped 1 compressed file totaling 31 bytes.
+end-of-inline-data
