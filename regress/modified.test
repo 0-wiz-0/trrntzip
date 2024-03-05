@@ -1,0 +1,12 @@
+description recognize a file with torrentzip comment was modified
+return 0
+arguments -l modified.zip
+file modified.zip modified.zip modified.tzip
+stdout
+Rezipping - modified.zip
+--------------------------------------------------
+Adding - modified.txt (9 bytes)...Done
+Adding - test.txt (31 bytes)...Done
+--------------------------------------------------
+Rezipped 2 compressed files totaling 40 bytes.
+end-of-inline-data
