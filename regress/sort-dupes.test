@@ -1,0 +1,14 @@
+description torrentzip a file, sorting the entries, there are case-insensitive name conflicts
+return 0
+arguments -l sort-dupes.zip
+file sort-dupes.zip sort-unsorted-dupes.zip sorted-sorted-dupes.tzip
+stdout
+Rezipping - sort-dupes.zip
+--------------------------------------------------
+Adding - ABC (4 bytes)...Done
+Adding - DEF (4 bytes)...Done
+Adding - abc (4 bytes)...Done
+Adding - def (4 bytes)...Done
+--------------------------------------------------
+Rezipped 4 compressed files totaling 16 bytes.
+end-of-inline-data

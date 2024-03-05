@@ -1,0 +1,14 @@
+description torrentzip a file, sorting the entries
+return 0
+arguments -l sort.zip
+file sort.zip sort-unsorted.zip sort-sorted.tzip
+stdout
+Rezipping - sort.zip
+--------------------------------------------------
+Adding - - (2 bytes)...Done
+Adding - 1 (2 bytes)...Done
+Adding - a (2 bytes)...Done
+Adding - Z (2 bytes)...Done
+--------------------------------------------------
+Rezipped 4 compressed files totaling 8 bytes.
+end-of-inline-data
