@@ -1,0 +1,12 @@
+description test -e: write error log to file
+return 0
+arguments -e -l dupe.zip
+file dupe.zip dupe.zip dupe.zip
+stdout
+Rezipping - dupe.zip
+--------------------------------------------------
+Adding - abc (4 bytes)...Done
+end-of-inline-data
+stderr
+Zip file "dupe.zip" contains more than one file named "abc"
+end-of-inline-data

@@ -1,5 +1,6 @@
 set(XFAIL_TESTS
   cli-e.test
+  cli-e-2.test
   sort-dupes.test
 )
 
