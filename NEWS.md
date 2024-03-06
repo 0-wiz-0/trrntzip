@@ -1,3 +1,9 @@
+# 1.3 [2024-03-06]
+
+* fix for a core dump
+* more consistent casing behaviour across platforms
+* add some tests
+
 # 1.2 [2024-02-22]
 
 * fix a build error on windows

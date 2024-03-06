@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 
 project(trrntzip
-  VERSION 1.2
+  VERSION 1.3
   LANGUAGES C)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
