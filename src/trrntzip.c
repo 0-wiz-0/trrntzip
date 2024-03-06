@@ -460,7 +460,7 @@ int MigrateZip(const char *zip_path, const char *pDir, WORKSPACE *ws,
   for (iArray = 0; iArray < ws->iElements && ws->FileNameArray[iArray][0];
        iArray++) {
     strcpy(szFileName, ws->FileNameArray[iArray]);
-    rc = unzLocateFile(UnZipHandle, szFileName, 0);
+    rc = unzLocateFile(UnZipHandle, szFileName, 1);
     zip64 = 0;
 
     if (rc == UNZ_OK) {
