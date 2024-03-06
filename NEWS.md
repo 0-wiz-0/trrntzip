@@ -1,6 +1,6 @@
 # 1.3 [2024-03-06]
 
-* fix for a core dump
+* fix a core dump
 * more consistent casing behaviour across platforms
 * add some tests
 
