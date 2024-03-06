@@ -1,5 +1,4 @@
 set(XFAIL_TESTS
-  sort-dupes.test
 )
 
 if(RUN_REGRESS)
