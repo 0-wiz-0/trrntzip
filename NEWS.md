@@ -1,5 +1,6 @@
 # 1.3 [2024-03-06]
 
+* fix a regression in 1.2 which wrongly treated some zip files as torrentzipped
 * fix a core dump
 * more consistent casing behaviour across platforms
 * add some tests
