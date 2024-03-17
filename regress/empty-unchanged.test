@@ -1,0 +1,7 @@
+description run on already torrentzipped empty zip file
+return 0
+arguments -l empty.zip
+file empty.zip empty.tzip
+stdout
+Skipping, already TorrentZipped - empty.zip
+end-of-inline-data
