@@ -1,0 +1,12 @@
+description test zip file with valid comment but wrong order gets re-zipped
+return 0
+arguments -l swap.zip
+file swap.zip no-directories-swapped.tzip no-directories.tzip
+stdout
+Rezipping - swap.zip
+--------------------------------------------------
+Adding - x (2 bytes)...Done
+Adding - y (2 bytes)...Done
+--------------------------------------------------
+Rezipped 2 compressed files totaling 4 bytes.
+end-of-inline-data
