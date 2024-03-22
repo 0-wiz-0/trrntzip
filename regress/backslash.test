@@ -1,0 +1,11 @@
+description torrentzip a zip with a \ in an entry name
+return 0
+arguments -l backslash.zip
+file backslash.zip backslash.zip backslash.tzip
+stdout
+Rezipping - backslash.zip
+--------------------------------------------------
+Adding - \ (2 bytes)...Done
+--------------------------------------------------
+Rezipped 1 compressed file totaling 2 bytes.
+end-of-inline-data
