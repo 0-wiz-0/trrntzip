@@ -1,0 +1,14 @@
+description check directories which only differ by case get removed
+return 0
+arguments -l dircase.zip
+file dircase.zip dircase.zip dircase.tzip
+stdout
+Rezipping - dircase.zip
+--------------------------------------------------
+Directory A/ Removed
+Directory a/ Removed
+Adding - A/x (2 bytes)...Done
+Adding - a/y (2 bytes)...Done
+--------------------------------------------------
+Rezipped 2 compressed files totaling 4 bytes.
+end-of-inline-data
