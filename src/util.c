@@ -21,13 +21,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <unistd.h>
 
 #define NDEBUG
 #include <assert.h>
 
 #include "global.h"
 #include "util.h"
+
+#ifdef _WIN32
+#include <direct.h>
+#else
+#include <unistd.h>
+#endif
 
 // The canonical order is case insensitive, but we need a tie-breaker
 // to avoid ambiguity
