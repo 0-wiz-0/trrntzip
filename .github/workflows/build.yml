@@ -12,12 +12,8 @@ jobs:
         uses: actions/checkout@v2
       - name: install dependencies (Windows)
         if: ${{ runner.os == 'Windows' }}
-        uses: lukka/run-vcpkg@v10
-        id: runvcpkg
-        with:
-          vcpkgGitCommitId: 8bb3f9e4a08a5b71ee93a6f1bcdd7a258bb48392
-          vcpkgTriplet: x64-windows
-          vcpkgArguments: zlib
+        run: |
+          vcpkg install zlib:x64-windows
       - name: prepare build directory
         run: |
           cmake -E make_directory ${{runner.workspace}}/build
@@ -30,7 +26,8 @@ jobs:
         if: ${{ runner.os == 'Windows' }}
         working-directory: ${{runner.workspace}}/build
         run: |
-          cmake -DCMAKE_TOOLCHAIN_FILE=${{env.VCPKG_ROOT}}/scripts/buildsystems/vcpkg.cmake ${{github.workspace}}
+          $cmarg = "-DCMAKE_TOOLCHAIN_FILE=" + $env:VCPKG_INSTALLATION_ROOT + "\scripts\buildsystems\vcpkg.cmake"
+          cmake $cmarg ${{github.workspace}}
       - name: build
         working-directory: ${{runner.workspace}}/build
         run: |
