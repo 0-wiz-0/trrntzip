@@ -17,10 +17,12 @@
 
 #include "platform.h"
 
-#ifdef WIN32
+#ifdef _WIN32
+#include <fcntl.h>
 #include <io.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 int mkstemp(char *ntemplate) {
   int i, fd = -1;
@@ -30,7 +32,7 @@ int mkstemp(char *ntemplate) {
     if (!mktemp(ntemplate))
       break;
 
-    fd = open(ntemplate, O_RDWR | C_CREAT | O_EXCL, S_IREAD | S_IWRITE);
+    fd = open(ntemplate, O_RDWR | O_CREAT | O_EXCL, S_IREAD | S_IWRITE);
     if (fd >= 0 || errno != EEXIST)
       break;
 
