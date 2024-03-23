@@ -226,7 +226,7 @@ const char *UpdateFile(const char *dest, const char *tmpfile) {
              "Please replace the file manually.";
     else
       return "Unable to remove destination for replacement (temporary "
-             "file removed)."
+             "file removed).";
   }
   if (rename(tmpfile, dest))
     return "The original file has already been deleted, so you must rename "
