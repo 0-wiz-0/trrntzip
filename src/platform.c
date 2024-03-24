@@ -22,6 +22,7 @@
 #include <io.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 
 int mkstemp(char *ntemplate) {
