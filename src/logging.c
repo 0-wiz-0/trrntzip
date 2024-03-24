@@ -26,6 +26,10 @@
 #include "logging.h"
 #include "util.h"
 
+#ifdef _WIN32
+#include <conio.h>
+#endif
+
 static FILE *OpenLog(const char *szFileName);
 
 // Global var to store if the logprint func is expecting more

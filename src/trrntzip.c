@@ -43,6 +43,10 @@
 #include "logging.h"
 #include "util.h"
 
+#ifdef _WIN32
+#include <conio.h>
+#endif
+
 #ifndef TZ_VERSION
 #error "Build system must define TZ_VERSION"
 #endif
