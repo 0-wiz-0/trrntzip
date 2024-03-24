@@ -18,12 +18,56 @@
 #ifdef _WIN32
 #include <fcntl.h>
 #include <io.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
 #include "platform.h"
+
+struct dir_s {
+  intptr_t handle;
+  int unread;
+  struct _finddatai64_t entry;
+};
+
+DIR *opendir(const char *name) {
+  size_t sz = strlen(name) + 3;
+  char *spec = malloc(sz);
+  DIR *dirp = malloc(sizeof(DIR));
+
+  if (!spec || !dirp) {
+    free(spec);
+    free(dirp);
+    return NULL;
+  }
+  snprintf(spec, sz, "%s%c*", name, DIRSEP);
+  dirp->unread = 1;
+  dirp->handle = _findfirsti64(spec, &dirp->entry);
+  free(spec);
+  if (dirp->handle == -1) {
+    free(dirp);
+    return NULL;
+  }
+  return dirp;
+}
+
+int closedir(DIR *dirp) {
+  int rv = _findclose(dirp->handle);
+  free(dirp);
+  return rv;
+}
+
+struct dirent *readdir(DIR *dirp) {
+  if (dirp->unread) {
+    dirp->unread = 0;
+    return &dirp->entry;
+  }
+  if (_findnexti64(dirp->handle, &dirp->entry))
+    return NULL;
+  return &dirp->entry;
+}
 
 int mkstemp(char *ntemplate) {
   int i, fd = -1;

@@ -48,6 +48,14 @@ int getch(void);
 #define strcasecmp stricmp
 #define strncasecmp strnicmp
 
+typedef struct dir_s DIR;
+#define dirent _finddatai64_t
+#define d_name name
+
+DIR *opendir(const char *name);
+int closedir(DIR *dirp);
+struct dirent *readdir(DIR *dirp);
+
 int mkstemp(char *ntemplate);
 #endif
 

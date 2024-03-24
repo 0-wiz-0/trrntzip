@@ -23,7 +23,6 @@
 #include "minizip.h"
 
 #include <ctype.h>
-#include <dirent.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <math.h>
@@ -33,19 +32,21 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <time.h>
-#include <unistd.h>
-#include <utime.h>
 
 #define NDEBUG
 #include <assert.h>
 
+#ifdef _WIN32
+#include <conio.h>
+#include <io.h>
+#else
+#include <dirent.h>
+#include <unistd.h>
+#endif
+
 #include "global.h"
 #include "logging.h"
 #include "util.h"
-
-#ifdef _WIN32
-#include <conio.h>
-#endif
 
 #ifndef TZ_VERSION
 #error "Build system must define TZ_VERSION"
