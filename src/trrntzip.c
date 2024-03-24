@@ -48,6 +48,20 @@
 #include "logging.h"
 #include "util.h"
 
+// The following macros may be missing on Windows
+#ifndef R_OK
+#define R_OK 4
+#endif
+#ifndef W_OK
+#define W_OK 2
+#endif
+#ifndef S_ISDIR
+#define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
+#endif
+#ifndef S_ISREG
+#define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
+#endif
+
 #ifndef TZ_VERSION
 #error "Build system must define TZ_VERSION"
 #endif
