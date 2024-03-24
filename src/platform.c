@@ -15,8 +15,6 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-#include "platform.h"
-
 #ifdef _WIN32
 #include <fcntl.h>
 #include <io.h>
@@ -24,6 +22,8 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#include "platform.h"
 
 int mkstemp(char *ntemplate) {
   int i, fd = -1;
@@ -52,6 +52,8 @@ int mkstemp(char *ntemplate) {
 #include <stdio.h>
 #include <termios.h>
 #include <unistd.h>
+
+#include "platform.h"
 
 #if defined(__CYGWIN__)
 /* Workaround for Cygwin, which is missing cfmakeraw */
