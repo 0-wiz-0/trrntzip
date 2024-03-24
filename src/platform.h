@@ -44,6 +44,8 @@ int getch(void);
 #define stat _stati64
 #define lstat stat
 #define off_t off64_t
+#define strcasecmp stricmp
+#define strncasecmp strnicmp
 
 int mkstemp(char *ntemplate);
 #endif
