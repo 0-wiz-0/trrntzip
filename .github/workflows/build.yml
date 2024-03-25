@@ -8,27 +8,18 @@ jobs:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
     steps:
-      - name: checkout
+      - name: Checkout source
         uses: actions/checkout@v4
-      - name: install dependencies (Windows)
+      - name: 'Install dependencies: zlib (Windows)'
         if: ${{ runner.os == 'Windows' }}
         run: |
           vcpkg install zlib:x64-windows
-      - name: prepare build directory
+          $cmtc = "CMAKE_TC_ARG=-DCMAKE_TOOLCHAIN_FILE=" + $env:VCPKG_INSTALLATION_ROOT + "\scripts\buildsystems\vcpkg.cmake"
+          echo $cmtc >> $env:GITHUB_ENV
+      - name: Configure
         run: |
-          cmake -E make_directory ${{runner.workspace}}/build
-      - name: configure (Unix)
-        if: ${{ runner.os != 'Windows' }}
-        working-directory: ${{runner.workspace}}/build
-        run: |
-          cmake ${{github.workspace}}
-      - name: configure (Windows)
-        if: ${{ runner.os == 'Windows' }}
-        working-directory: ${{runner.workspace}}/build
-        run: |
-          $cmarg = "-DCMAKE_TOOLCHAIN_FILE=" + $env:VCPKG_INSTALLATION_ROOT + "\scripts\buildsystems\vcpkg.cmake"
-          cmake $cmarg ${{github.workspace}}
-      - name: build
+          cmake ${{env.CMAKE_TC_ARG}} -B ${{runner.workspace}}/build -S ${{github.workspace}}
+      - name: Build
         working-directory: ${{runner.workspace}}/build
         run: |
           cmake --build . --config Release
