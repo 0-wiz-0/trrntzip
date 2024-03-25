@@ -16,6 +16,9 @@ jobs:
           vcpkg install zlib:x64-windows
           $cmtc = "CMAKE_TC_ARG=-DCMAKE_TOOLCHAIN_FILE=" + $env:VCPKG_INSTALLATION_ROOT + "\scripts\buildsystems\vcpkg.cmake"
           echo $cmtc >> $env:GITHUB_ENV
+      - name: 'Install test dependencies: nihtest'
+        run: |
+          pip install nihtest
       - name: Configure
         run: |
           cmake ${{env.CMAKE_TC_ARG}} -B ${{runner.workspace}}/build -S ${{github.workspace}}
