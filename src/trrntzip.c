@@ -787,7 +787,7 @@ int RecursiveMigrateDir(const char *pszRelPath, WORKSPACE *ws) {
   int FileNameStartPos;
 
   DIR *dirp = NULL;
-  MIGRATE mig = {};
+  MIGRATE mig = {0};
 
   // Get our start time for the conversion process of this dir/zip
   mig.StartTime = time(NULL);
@@ -903,7 +903,7 @@ int RecursiveMigrateTop(const char *pszRelPath, WORKSPACE *ws) {
   char szRelPathBuf[MAX_PATH + 1];
   int n;
   struct stat istat;
-  MIGRATE mig = {};
+  MIGRATE mig = {0};
 
   mig.StartTime = time(NULL);
 
