@@ -1,6 +1,6 @@
 [settings]
 test-input-directories = @CMAKE_CURRENT_SOURCE_DIR@
-program-directories = @PROJECT_BINARY_DIR@/src
+program-directories = @TEST_BINARY_PATH@
 default-program = trrntzip
 default-stderr-replace = "^[^ :]*: " ""
 

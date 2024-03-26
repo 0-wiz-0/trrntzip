@@ -14,4 +14,8 @@ if(RUN_REGRESS)
   endforeach()
 endif()
 
+set(TEST_BINARY_PATH ${PROJECT_BINARY_DIR}/src)
+foreach (cfg ${CMAKE_CONFIGURATION_TYPES})
+  set(TEST_BINARY_PATH "${TEST_BINARY_PATH}\n\t${PROJECT_BINARY_DIR}/src/${cfg}")
+endforeach()
 configure_file(nihtest.conf.in nihtest.conf @ONLY)
