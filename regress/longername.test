@@ -1,6 +1,6 @@
 description torrentzip a zip with a too long entry name
 return 0
-arguments -l longername.zip
+arguments -l -g longername.zip
 file longername.zip longername.zip
 stderr
 Could not list contents of "longername.zip". File is corrupted or contains entries with bad names.

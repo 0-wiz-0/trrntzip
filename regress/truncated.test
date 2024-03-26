@@ -1,6 +1,6 @@
 description skip tiny files without attempting to open
 return 0
-arguments -l truncated.zip
+arguments -l -g truncated.zip
 file truncated.zip truncated.zip
 stderr
 "truncated.zip" is too small (21 bytes). File may be corrupt.
