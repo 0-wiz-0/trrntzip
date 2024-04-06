@@ -4,7 +4,6 @@ if(WIN32)
   set(XFAIL_TESTS ${XFAIL_TESTS}
     cli-q.test
     cli-s.test
-    directories-2-d.test
     recurse.test
     recursive.test
   )
