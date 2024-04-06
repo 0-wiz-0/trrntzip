@@ -23,24 +23,44 @@
 #include "minizip.h"
 
 #include <ctype.h>
-#include <dirent.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <time.h>
-#include <unistd.h>
-#include <utime.h>
 
 #define NDEBUG
 #include <assert.h>
 
+#ifdef _WIN32
+#include <conio.h>
+#include <io.h>
+#else
+#include <dirent.h>
+#include <unistd.h>
+#endif
+
 #include "global.h"
 #include "logging.h"
 #include "util.h"
+
+// The following macros may be missing on Windows
+#ifndef R_OK
+#define R_OK 4
+#endif
+#ifndef W_OK
+#define W_OK 2
+#endif
+#ifndef S_ISDIR
+#define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
+#endif
+#ifndef S_ISREG
+#define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
+#endif
 
 #ifndef TZ_VERSION
 #error "Build system must define TZ_VERSION"
@@ -767,7 +787,7 @@ int RecursiveMigrateDir(const char *pszRelPath, WORKSPACE *ws) {
   int FileNameStartPos;
 
   DIR *dirp = NULL;
-  MIGRATE mig = {};
+  MIGRATE mig = {0};
 
   // Get our start time for the conversion process of this dir/zip
   mig.StartTime = time(NULL);
@@ -883,7 +903,7 @@ int RecursiveMigrateTop(const char *pszRelPath, WORKSPACE *ws) {
   char szRelPathBuf[MAX_PATH + 1];
   int n;
   struct stat istat;
-  MIGRATE mig = {};
+  MIGRATE mig = {0};
 
   mig.StartTime = time(NULL);
 

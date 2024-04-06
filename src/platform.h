@@ -43,7 +43,18 @@ int getch(void);
 #define DIRSEP '\\'
 #define stat _stati64
 #define lstat stat
+#define off64_t __int64
 #define off_t off64_t
+#define strcasecmp stricmp
+#define strncasecmp strnicmp
+
+typedef struct dir_s DIR;
+#define dirent _finddatai64_t
+#define d_name name
+
+DIR *opendir(const char *name);
+int closedir(DIR *dirp);
+struct dirent *readdir(DIR *dirp);
 
 int mkstemp(char *ntemplate);
 #endif

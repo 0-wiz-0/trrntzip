@@ -1,6 +1,6 @@
 description test -e: write error log to file
 return 0
-arguments -e -l dupe.zip
+arguments -e -l -g dupe.zip
 file dupe.zip dupe.zip dupe.zip
 stdout
 Rezipping - dupe.zip

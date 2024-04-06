@@ -15,12 +15,59 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-#include "platform.h"
-
-#ifdef WIN32
+#ifdef _WIN32
+#include <fcntl.h>
 #include <io.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
+#include "platform.h"
+
+struct dir_s {
+  intptr_t handle;
+  int unread;
+  struct _finddatai64_t entry;
+};
+
+DIR *opendir(const char *name) {
+  size_t sz = strlen(name) + 3;
+  char *spec = malloc(sz);
+  DIR *dirp = malloc(sizeof(DIR));
+
+  if (!spec || !dirp) {
+    free(spec);
+    free(dirp);
+    return NULL;
+  }
+  snprintf(spec, sz, "%s%c*", name, DIRSEP);
+  dirp->unread = 1;
+  dirp->handle = _findfirsti64(spec, &dirp->entry);
+  free(spec);
+  if (dirp->handle == -1) {
+    free(dirp);
+    return NULL;
+  }
+  return dirp;
+}
+
+int closedir(DIR *dirp) {
+  int rv = _findclose(dirp->handle);
+  free(dirp);
+  return rv;
+}
+
+struct dirent *readdir(DIR *dirp) {
+  if (dirp->unread) {
+    dirp->unread = 0;
+    return &dirp->entry;
+  }
+  if (_findnexti64(dirp->handle, &dirp->entry))
+    return NULL;
+  return &dirp->entry;
+}
 
 int mkstemp(char *ntemplate) {
   int i, fd = -1;
@@ -30,7 +77,7 @@ int mkstemp(char *ntemplate) {
     if (!mktemp(ntemplate))
       break;
 
-    fd = open(ntemplate, O_RDWR | C_CREAT | O_EXCL, S_IREAD | S_IWRITE);
+    fd = open(ntemplate, O_RDWR | O_CREAT | O_EXCL, S_IREAD | S_IWRITE);
     if (fd >= 0 || errno != EEXIST)
       break;
 
@@ -49,6 +96,8 @@ int mkstemp(char *ntemplate) {
 #include <stdio.h>
 #include <termios.h>
 #include <unistd.h>
+
+#include "platform.h"
 
 #if defined(__CYGWIN__)
 /* Workaround for Cygwin, which is missing cfmakeraw */

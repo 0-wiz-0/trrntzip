@@ -6,33 +6,34 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-#        os: [macos-latest, ubuntu-latest, windows-latest]
-        os: [macos-latest, ubuntu-latest]
+        os: [macos-latest, ubuntu-latest, windows-latest]
     steps:
-      - name: checkout
-        uses: actions/checkout@v2
-      - name: install dependencies (Windows)
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: 'Environment setup (Windows)'
         if: ${{ runner.os == 'Windows' }}
-        uses: lukka/run-vcpkg@v10
-        id: runvcpkg
+        uses: actions/github-script@v7
         with:
-          vcpkgGitCommitId: 8bb3f9e4a08a5b71ee93a6f1bcdd7a258bb48392
-          vcpkgTriplet: x64-windows
-          vcpkgArguments: zlib
-      - name: prepare build directory
-        run: |
-          cmake -E make_directory ${{runner.workspace}}/build
-      - name: configure (Unix)
-        if: ${{ runner.os != 'Windows' }}
-        working-directory: ${{runner.workspace}}/build
-        run: |
-          cmake ${{github.workspace}}
-      - name: configure (Windows)
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+            core.exportVariable('CMAKE_TC_ARG', '-DCMAKE_TOOLCHAIN_FILE=' + (process.env.VCPKG_INSTALLATION_ROOT || '') + '\\scripts\\buildsystems\\vcpkg.cmake');
+            core.exportVariable('VCPKG_BINARY_SOURCES', 'clear;x-gha,readwrite');
+      - name: 'Install dependencies: zlib (Windows)'
         if: ${{ runner.os == 'Windows' }}
-        working-directory: ${{runner.workspace}}/build
         run: |
-          cmake -DCMAKE_TOOLCHAIN_FILE=${{env.VCPKG_ROOT}}/scripts/buildsystems/vcpkg.cmake ${{github.workspace}}
-      - name: build
+          vcpkg install zlib:x64-windows
+      - name: 'Install test dependencies: nihtest'
+        run: |
+          pip install nihtest
+      - name: Configure
+        run: |
+          cmake ${{env.CMAKE_TC_ARG}} -B ${{runner.workspace}}/build -S ${{github.workspace}}
+      - name: Build
         working-directory: ${{runner.workspace}}/build
         run: |
           cmake --build . --config Release
+      - name: Run tests
+        working-directory: ${{runner.workspace}}/build
+        run: |
+          ctest -C Release --output-on-failure --timeout 99

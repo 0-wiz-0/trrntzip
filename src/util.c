@@ -20,14 +20,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
 
 #define NDEBUG
 #include <assert.h>
 
 #include "global.h"
 #include "util.h"
+
+#ifdef _WIN32
+#include <direct.h>
+#else
+#include <unistd.h>
+#endif
 
 // The canonical order is case insensitive, but we need a tie-breaker
 // to avoid ambiguity
@@ -221,7 +227,7 @@ const char *UpdateFile(const char *dest, const char *tmpfile) {
              "Please replace the file manually.";
     else
       return "Unable to remove destination for replacement (temporary "
-             "file removed)."
+             "file removed).";
   }
   if (rename(tmpfile, dest))
     return "The original file has already been deleted, so you must rename "
