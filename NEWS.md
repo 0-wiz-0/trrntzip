@@ -1,3 +1,8 @@
+# Unreleased
+
+* fix build on Windows with MSVC
+* add more tests
+
 # 1.3 [2024-03-06]
 
 * fix a regression in 1.2 which wrongly treated some zip files as torrentzipped
