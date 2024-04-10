@@ -1,13 +1,5 @@
 set(XFAIL_TESTS
 )
-if(WIN32)
-  set(XFAIL_TESTS ${XFAIL_TESTS}
-    cli-q.test
-    cli-s.test
-    recurse.test
-    recursive.test
-  )
-endif()
 
 if(RUN_REGRESS)
   file(GLOB TEST_CASES ${CMAKE_CURRENT_SOURCE_DIR}/*.test)

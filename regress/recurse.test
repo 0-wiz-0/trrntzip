@@ -5,6 +5,8 @@ file dir/CaSe.ZiP small.zip small.tzip
 file dir/p small.zip
 file dir/skip.bin small.zip
 file dir/sub/small.zip small.zip small.tzip
+stdout-replace '(dir)\\\\' '\1/'
+stdout-replace '(sub)\\\\' '\1/'
 stdout
 Rezipping - dir/CaSe.ZiP
 --------------------------------------------------

@@ -41,7 +41,7 @@ else()
 endif()
 
 find_program(NIHTEST nihtest)
-set(NIHTEST_REQUIRED_VERSION "1.5")
+set(NIHTEST_REQUIRED_VERSION "1.6")
 
 option(RUN_REGRESS "Run regression tests" ON)
 

@@ -5,6 +5,7 @@ file dir/another.zip small.zip small.tzip
 file dir/moretorrentzip.zip small.tzip small.tzip
 file dir/sub/one.zip small.zip small.zip
 file dir/sub/torrentzip.zip small.tzip small.tzip
+stdout-replace '(dir)\\\\' '\1/'
 stdout
 Rezipping - dir/another.zip
 --------------------------------------------------
